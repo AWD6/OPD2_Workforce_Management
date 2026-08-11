@@ -1,4 +1,4 @@
-<!doctype html>
+ค<!doctype html>
 <html lang="th">
   <head>
     <meta charset="UTF-8" />
@@ -8,13 +8,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="style_1786446655504.css" />
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <div class="app-shell">
       <aside class="sidebar" aria-label="เมนูหลัก">
         <div class="brand">
-          <div class="brand-mark"><img src="opd2-logo-transparent.png" alt="OPD 2 Maharaj Nakorn Chiang Mai Hospital" /></div>
+          <div class="brand-mark"><img src="opd2-logo.jpg" alt="OPD 2 Maharaj Nakorn Chiang Mai Hospital" /></div>
           <div>
             <strong>CarePlan</strong>
             <span>Workforce Management</span>
@@ -63,7 +63,7 @@
       <main class="main-content" id="dashboard">
         <header class="topbar">
           <div class="mobile-brand">
-            <div class="brand-mark small"><img src="opd2-logo-transparent.png" alt="OPD 2" /></div>
+            <div class="brand-mark small"><img src="opd2-logo.jpg" alt="OPD 2" /></div>
             <strong>CarePlan</strong>
           </div>
           <div class="breadcrumb">ระบบจัดสรรกำลังบุคลากร <span>/</span> ห้องตรวจพิเศษศัลยกรรม 2</div>
@@ -107,7 +107,7 @@
               <div class="metric-icon blue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V9l8-5 8 5v11M8 20v-6h8v6M3 20h18"/></svg></div>
               <span class="metric-label">เจ้าหน้าที่ประจำทั้งหมด</span>
               <strong class="metric-value" id="totalStaff">11</strong>
-              <small>Nurse · PN · HP · ปฏิบัติงาน 7 ชม./คน/วัน</small>
+              <small>พยาบาล 7 · PN 2 · HP 2 คน</small>
               <div class="metric-breakdown" id="staffBreakdown"></div>
             </article>
             <article class="metric-card">
@@ -118,7 +118,7 @@
             </article>
             <article class="metric-card">
               <div class="metric-icon violet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></div>
-              <span class="metric-label">ความพร้อมเฉลี่ยรายวัน</span>
+              <span class="metric-label">ความพร้อมเฉลี่ย</span>
               <strong class="metric-value" id="averageProduct">—</strong>
               <small id="averageDetail">กดคำนวณเพื่อดูภาพรวม</small>
             </article>
@@ -166,17 +166,36 @@
 
           <section class="data-card" id="allocation">
             <div class="card-header">
-                <div>
-                  <div class="title-row"><h2>กำลังคนที่พร้อมทำงานรายวัน</h2><span class="editable-pill">แก้ไขได้</span></div>
-                  <p>บันทึกจำนวนคนลาเพื่อดูจำนวนบุคลากรที่พร้อมทำงานในวันนั้น โดยคำนวณจาก 7 ชั่วโมงต่อคน</p>
+              <div>
+                <div class="title-row"><h2>การจัดสรรกำลังคน</h2><span class="editable-pill">แก้ไขได้</span></div>
+                <p>บันทึกคนลา และเวลาที่ถูกดึงออกจากงานประจำ โดยคิดตามเวลาทำงานจริง 7 ชั่วโมงต่อเวร</p>
+              </div>
+              <div class="role-legend">
+                <span class="role-dot nurse-dot">Nurse</span><span class="role-dot pn-dot">PN</span><span class="role-dot hp-dot">HP</span>
               </div>
             </div>
             <div class="table-scroll">
               <div class="staffing-table">
-                  <div class="table-row table-head staffing-columns">
-                   <div>วันทำการ</div><div class="nurse-head">ลา Nurse<br /><small>(คน)</small></div><div class="pn-head">ลา PN<br /><small>(คน)</small></div><div class="hp-head">ลา HP<br /><small>(คน)</small></div><div>บุคลากรพร้อม</div><div>เวลาพร้อม<br /><small>(ชม.)</small></div>
+                <div class="table-row table-head staffing-columns">
+                  <div>วันทำการ</div><div class="nurse-head">ลา Nurse<br /><small>(คน)</small></div><div class="pn-head">ลา PN<br /><small>(คน)</small></div><div class="hp-head">ลา HP<br /><small>(คน)</small></div><div>อบรม/ประชุม<br /><small>(ชม.)</small></div><div>Float ออก<br /><small>(ชม.)</small></div><div>เก็บชั่วโมง<br /><small>(ชม.)</small></div>
                 </div>
                 <div id="staffingRows"></div>
+              </div>
+            </div>
+            <div class="allocation-note">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+              <span>กรอกกิจกรรมเป็น “ชั่วโมง” ไม่ใช่จำนวนคน ระบบจะนำเวลาลา อบรม/ประชุม Float ออก และเก็บชั่วโมงมาพิจารณาความพร้อม โดยไม่รวมบุคลากรช่วยเหลือจากหน่วยงานอื่น</span>
+            </div>
+            <div class="role-activity-panel">
+              <div class="role-activity-heading">
+                <div><h3>รายละเอียดกิจกรรมแยกตามตำแหน่ง</h3><p>ระบุว่าในแต่ละวัน Nurse, PN หรือ HP ถูกดึงออกจากงานด้วยกิจกรรมใดบ้าง</p></div>
+                <span class="hours-badge">1 เวร = 7 ชม. ที่นำไปคำนวณ</span>
+              </div>
+              <div class="table-scroll">
+                <div class="role-activity-table">
+                  <div class="role-activity-head"><div>วันทำการ</div><div class="role-group nurse-group">Nurse <span id="nurseRoleTotal">7 คน</span> <small>อบรม · ประชุม · Float · เก็บชั่วโมง (ชม.)</small></div><div class="role-group pn-group">PN <span id="pnRoleTotal">2 คน</span> <small>อบรม · ประชุม · Float · เก็บชั่วโมง (ชม.)</small></div><div class="role-group hp-group">HP <span id="hpRoleTotal">2 คน</span> <small>อบรม · ประชุม · Float · เก็บชั่วโมง (ชม.)</small></div></div>
+                  <div id="roleActivityRows"></div>
+                </div>
               </div>
             </div>
           </section>
@@ -188,7 +207,7 @@
 
           <section class="records-section" id="records">
             <div class="section-heading records-heading">
-               <div><h2>บันทึกข้อมูลรายสัปดาห์</h2><p>เก็บภาพรวมความพร้อม จำนวนเจ้าหน้าที่ แผนผู้รับบริการ และกำลังคนในแต่ละวัน</p></div>
+              <div><h2>บันทึกข้อมูลรายสัปดาห์</h2><p>เก็บรายละเอียดทั้งหมดของ Week เพื่อย้อนดู Product จำนวนเจ้าหน้าที่ แผนผู้รับบริการ และการจัดสรรกำลังคนในแต่ละวัน</p></div>
               <button class="primary-button compact" id="saveRecord">บันทึกสัปดาห์นี้</button>
             </div>
             <div id="recordsList" class="records-list"></div>
@@ -196,10 +215,10 @@
 
           <section class="guide-section" id="guide">
             <div class="section-heading"><div><h2>เกณฑ์การอ่านความพร้อม</h2><p>ใช้เป็นแนวทางประกอบการตัดสินใจ ไม่แทนการพิจารณาของหัวหน้าหน่วยงาน</p></div></div>
-             <div class="guide-grid">
-              <div class="guide-item healthy"><i></i><div><strong>บุคลากรเหมาะสมกับงาน</strong><span>กำลังคนพอดีกับภาระงานในวันนั้น</span></div></div>
-              <div class="guide-item low"><i></i><div><strong>บุคลากรมากกว่างาน</strong><span>มีกำลังคนพร้อมมากกว่าภาระงานที่คาดการณ์</span></div></div>
-              <div class="guide-item high"><i></i><div><strong>งานมากกว่าบุคลากร</strong><span>ภาระงานสูงกว่ากำลังคนที่พร้อม ควรตรวจสอบก่อนเปิดคลินิก</span></div></div>
+            <div class="guide-grid">
+              <div class="guide-item healthy"><i></i><div><strong>85–115% · เหมาะสม</strong><span>ทีมมีสัดส่วนกำลังคนพอดีกับภาระงาน</span></div></div>
+              <div class="guide-item low"><i></i><div><strong>&lt; 85% · กำลังคนเหลือ</strong><span>พิจารณาปรับแผนหรือสนับสนุนหน่วยงานข้างเคียง</span></div></div>
+              <div class="guide-item high"><i></i><div><strong>&gt; 115% · ต้องเฝ้าระวัง</strong><span>ตรวจสอบจำนวนคนลาและปรับแผนก่อนเปิดคลินิก</span></div></div>
             </div>
           </section>
 
@@ -214,13 +233,13 @@
         <div class="modal-kicker">Weekly workforce report</div>
         <h2 id="reportTitle">รายงานความพร้อมกำลังคน</h2>
         <p id="reportSummary"></p>
-         <div class="report-stats"><div><span>ค่าเฉลี่ยรายวัน</span><strong id="reportAverage">—</strong></div><div><span>บุคลากรเหมาะสมกับงาน</span><strong id="reportHealthy">0 วัน</strong></div><div><span>ต้องตรวจสอบ</span><strong id="reportAlerts">0 วัน</strong></div></div>
+        <div class="report-stats"><div><span>ค่าเฉลี่ย</span><strong id="reportAverage">—</strong></div><div><span>เหมาะสม</span><strong id="reportHealthy">0 วัน</strong></div><div><span>ต้องตรวจสอบ</span><strong id="reportAlerts">0 วัน</strong></div></div>
         <div class="report-list" id="reportList"></div>
         <button class="primary-button full" id="dismissReport">รับทราบและกลับไปแก้ไข</button>
       </div>
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="script_1786446655503.js"></script>
+    <script src="script.js"></script>
   </body>
 </html>
