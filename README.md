@@ -3,7 +3,7 @@
 > **Intelligent workforce planning system for OPD 2 (Surgical Specialty Clinic)**  
 > A modern, luxurious web application for managing daily staff readiness and patient demand forecasting
 
-![Version](https://img.shields.io/badge/version-2.2-blue.svg)
+![Version](https://img.shields.io/badge/version-3.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 
@@ -16,7 +16,7 @@ CarePlan is a sophisticated workforce management system designed specifically fo
 - **📊 Daily Readiness Assessment**: Calculate workforce readiness based on 7-hour work shifts (08:00–16:00)
 - **👥 Smart Staff Allocation**: Manage Nurse, PN, and HP staff assignments with leave and activity tracking
 - **📈 Demand Forecasting**: Plan for patient volume across appointment, walk-in, and external channels
-- **🎨 Luxury UI/UX**: Turquoise / sky / white light theme with glassmorphism, dimensional shadows, hover elevation, and smooth micro-interactions
+- **🎨 Luxury UI/UX**: Dark-theme interaction model preserved in a Turquoise / sky / off-white light theme with glassmorphism, dimensional shadows, hover elevation, and smooth micro-interactions
 - **💾 Local Data Storage**: All data stored securely on user's device (localStorage)
 - **📱 Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
 - **🔄 Weekly Records**: Archive and review historical workforce plans
@@ -191,12 +191,13 @@ OPD2_Workforce_Management/
 
 ## 🔄 Version History
 
-### v2.2 (Current)
-- ✨ Turquoise / sky / white Light Luxury redesign
-- 🎨 Glassmorphism surfaces with dimensional multi-layer shadows
-- 🎯 Hover elevation, glow, sheen sweep, and micro-interactions
+### v3.0 (Current)
+- ✨ Converted the reference Dark UI into a Turquoise / sky / off-white Light Luxury skin without changing the core geometry or typography
+- 🎨 Turquoise gradient sidebar with layered glass detail and an off-white content canvas
+- 🎯 Hover elevation, glow, sheen sweep, focus rings, and micro-interactions retained from the reference design
 - 🖼️ Borderless premium logo presentation
 - 🔓 Editable training, Float, and compensatory hour inputs
+- 📱 Responsive layouts for iPhone, iPad, notebook, laptop, and narrow screens
 - 📊 Daily 7-hour readiness calculation
 - 🟢 Color-coded status system
 - 🧹 Removed role activity panel
@@ -264,4 +265,4 @@ git push origin main
 
 **Made with ❤️ for better healthcare workforce management**
 
-*Last Updated: August 11, 2026 · Version 2.2*
+*Last Updated: August 11, 2026 · Version 3.0*

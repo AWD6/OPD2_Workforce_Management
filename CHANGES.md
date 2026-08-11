@@ -1,15 +1,15 @@
-# OPD 2 Workforce Management - Update Summary (v2.2)
+# OPD 2 Workforce Management - Update Summary (v3.0)
 
 ## Changes Applied
 
-### 1. ✅ Turquoise Light Luxury Theme with Dimension
-- **Theme Shift**: Changed from dark theme to a professional **Turquoise, Light Blue, and White** palette suitable for a hospital environment.
-- **Visual Style**: Rebuilt the light theme to preserve the previous premium interaction quality without using a dark canvas:
-  - **Glassmorphism**: Frosted translucent sidebar, topbar, cards, and modal layers.
-  - **Soft Gradients**: Turquoise, sky-blue, and white multi-stop surfaces.
+### 1. ✅ Dark UI Model Converted to Turquoise Light Luxury
+- **Theme Shift**: Converted the reference Dark UI into a hospital-friendly **Turquoise, Sky Blue, Off-white, and White** palette.
+- **Visual Style**: Kept the reference geometry, typography, spacing, controls, icons, and interaction model intact while changing the visual skin:
+  - **Turquoise Sidebar**: Full-height gradient sidebar clearly separated from the white content area.
+  - **Glassmorphism**: Frosted translucent topbar, cards, action bar, and modal layers.
   - **Layered Depth**: Multi-layer shadows, inner highlights, borders, and ambient radial light.
   - **Hover Elevation**: Cards, navigation, inputs, buttons, records, and guide items lift with a refined glow.
-  - **Micro-interactions**: Metric icon tilt, button sheen sweep, active navigation depth, and focus rings.
+  - **Micro-interactions**: Sheen sweep, focus rings, active navigation depth, and responsive hover motion.
 
 ### 2. ✅ Logo Presentation Refinement
 - **Style**: Removed the box/border around the logo.
@@ -43,7 +43,7 @@
 - `style.css`: Complete rewrite to Turquoise Luxury light theme.
 - `script.js`: Updated staffing table to support manual input for all hour fields; disabled automatic overwriting of manual hours.
 
-### Color Palette (v2.2)
+### Color Palette (v3.0)
 - **Primary**: #12b8a3 (Turquoise)
 - **Secondary**: #4b9de8 (Sky Blue)
 - **Background**: #edf8f8 (Light Turquoise Canvas)
@@ -52,4 +52,5 @@
 
 ---
 **Updated**: August 11, 2026
-**Version**: 2.2 (Turquoise Light Luxury Edition)
+**Responsive**: iPhone · iPad · notebook · laptop · narrow screens
+**Version**: 3.0 (Dark UI Model · Turquoise Light Luxury Edition)

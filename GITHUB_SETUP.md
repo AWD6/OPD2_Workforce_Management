@@ -25,7 +25,7 @@ cd OPD2_Workforce_Management
 # Copy all files from the ZIP into this directory
 # Then:
 git add .
-git commit -m "Initial commit: CarePlan v2.2 - Turquoise Light Luxury Workforce Management System"
+git commit -m "Initial commit: CarePlan v3.0 - Turquoise Light Luxury Workforce Management System"
 git push -u origin main
 ```
 
@@ -60,7 +60,7 @@ It may take a few minutes to deploy. Refresh the page if needed.
 ```
 OPD2_Workforce_Management/
 ├── index.html                    # Main application
-├── style.css                     # Styling (Turquoise Light Luxury theme)
+├── style.css                     # Styling (Dark UI model converted to Turquoise Light Luxury)
 ├── script.js                     # Application logic
 ├── opd2-logo-transparent.png     # Hospital logo
 ├── README.md                     # Project documentation
@@ -74,11 +74,11 @@ OPD2_Workforce_Management/
 After deployment, verify:
 
 - [ ] Site loads at `https://YOUR_USERNAME.github.io/OPD2_Workforce_Management`
-- [ ] Turquoise / sky / white Light Luxury theme displays correctly
+- [ ] Turquoise sidebar and sky / off-white Light Luxury theme display correctly
 - [ ] Logo appears in sidebar
 - [ ] Buttons and inputs are interactive
 - [ ] Data saves to localStorage
-- [ ] Responsive design works on mobile
+- [ ] Responsive design works on iPhone, iPad, notebook, and laptop widths
 - [ ] No console errors (F12 → Console)
 
 ## 🔧 Troubleshooting
@@ -156,4 +156,4 @@ For GitHub-specific issues:
 
 **Ready to deploy? Start with Step 1 above!**
 
-*Last Updated: August 11, 2026 · Version 2.2*
+*Last Updated: August 11, 2026 · Version 3.0*
