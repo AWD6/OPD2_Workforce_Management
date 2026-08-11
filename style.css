@@ -573,3 +573,121 @@ h1 { color: var(--navy); text-shadow: 0 2px 12px rgba(21,104,119,.08); }
 /* Requested final fixes */
 .brand-mark, .mobile-brand .brand-mark { border: 0 !important; border-radius: 0 !important; background: transparent !important; }
 [hidden] { display: none !important; }
+
+
+/* v3.1 — premium logo focus and landscape-responsive layout */
+.brand {
+  position: relative;
+  align-items: center;
+  min-height: 68px;
+  padding: 0 8px 12px;
+  gap: 10px;
+}
+.brand::before {
+  position: absolute;
+  top: -25px;
+  left: -22px;
+  width: 190px;
+  height: 132px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(235,255,253,.28) 0%, rgba(235,255,253,.10) 37%, transparent 72%);
+  filter: blur(10px);
+  content: "";
+  pointer-events: none;
+}
+.brand-mark {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 54px;
+  width: 54px;
+  height: 54px;
+  margin-left: -2px;
+  filter: drop-shadow(0 12px 16px rgba(0,72,91,.30)) drop-shadow(0 0 8px rgba(226,255,250,.30));
+}
+.brand-mark::before {
+  position: absolute;
+  z-index: -1;
+  top: 3px;
+  left: 5px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.34) 0%, rgba(221,255,250,.13) 50%, transparent 76%);
+  box-shadow: 0 0 24px rgba(216,255,250,.24);
+  content: "";
+}
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  transform: scale(1.14);
+  transform-origin: center;
+}
+.brand > div:last-child { position: relative; z-index: 1; }
+.brand strong { font-size: 16px; text-shadow: 0 2px 12px rgba(0,62,79,.22); }
+.brand span { text-shadow: 0 1px 8px rgba(0,62,79,.16); }
+
+/* Keep the compact mobile logo prominent without introducing a frame. */
+.mobile-brand .brand-mark.small {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  margin-left: 0;
+}
+.mobile-brand .brand-mark.small::before { top: 2px; left: 3px; width: 28px; height: 28px; }
+.mobile-brand .brand-mark.small img { transform: scale(1.16); }
+
+/* Landscape mode: reflow the page instead of merely stretching portrait rules.
+   The 932px CSS width of iPhone 16 Pro Max landscape is covered here. */
+@media (orientation: landscape) and (max-width: 1100px) {
+  body { overflow-x: hidden; }
+  .sidebar { display: none; }
+  .topbar {
+    position: sticky;
+    z-index: 20;
+    top: 0;
+    min-height: 54px;
+    padding: 8px 20px;
+  }
+  .mobile-brand { display: flex; }
+  .mobile-brand .brand-mark.small { width: 32px; height: 32px; flex-basis: 32px; }
+  .mobile-brand .brand-mark.small::before { width: 26px; height: 26px; }
+  .breadcrumb { display: none; }
+  .updated-time { font-size: 10px; }
+  .page-wrap { padding: 22px 24px 30px; }
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 22px;
+  }
+  .hero p { max-width: 720px; margin-top: 10px; }
+  .week-picker-wrap { width: auto; }
+  .week-button { width: auto; justify-content: center; }
+  .metric-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 24px;
+  }
+  .metric-card { min-width: 0; padding: 14px; }
+  .settings-card, .data-card, .records-section, .guide-section { margin-top: 14px; }
+  .table-scroll { overscroll-behavior-x: contain; }
+}
+@media (orientation: landscape) and (max-width: 760px) {
+  .topbar { padding: 7px 14px; }
+  .page-wrap { padding: 18px 16px 24px; }
+  .hero { grid-template-columns: minmax(0, 1fr) 180px; gap: 14px; }
+  h1 { font-size: 29px; }
+  .hero p { font-size: 11px; line-height: 1.55; }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .metric-card { padding: 12px; }
+  .metric-value { font-size: 21px; }
+  .section-heading, .card-header { gap: 9px; }
+  .settings-card, .records-section, .guide-section { padding: 13px; }
+  .card-header { padding: 13px; }
+}
+@media (orientation: landscape) and (max-height: 450px) {
+  .hero { gap: 12px; }
+  .metric-grid { margin-top: 18px; }
+  .metric-label { margin-top: 10px; }
+  .metric-card small { margin-top: 2px; }
+}

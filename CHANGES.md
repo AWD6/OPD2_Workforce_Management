@@ -1,8 +1,19 @@
-# OPD 2 Workforce Management - Update Summary (v3.0)
+# OPD 2 Workforce Management - Update Summary (v3.1)
 
 ## Changes Applied
 
-### 1. ✅ Dark UI Model Converted to Turquoise Light Luxury
+### 1. ✅ Logo Prominence & Sidebar Refinement
+- **Logo Focus**: Added a **Soft Glow (Radial Gradient)** and multi-layer drop shadows behind the logo to make it stand out prominently against the Turquoise sidebar.
+- **Visual Balance**: Refined the sidebar's internal gradients to ensure the logo remains the primary focal point while maintaining the luxury Turquoise aesthetic.
+
+### 2. ✅ Advanced Responsive Support (Landscape Mode)
+- **iPhone 16 Pro Max Support**: Specifically optimized for high-resolution mobile devices, including the iPhone 16 Pro Max landscape width (~932px).
+- **Landscape Reflow**: Added dedicated CSS for landscape orientation:
+  - **Sticky Topbar**: Switches to a sticky header in landscape to maximize vertical planning space.
+  - **Grid Optimization**: Metric cards and Hero sections reflow into balanced columns (2 or 4) to suit the wider aspect ratio.
+  - **Improved Spacing**: Adjusted paddings and margins to prevent UI stretching.
+
+### 3. ✅ Dark UI Model Converted to Turquoise Light Luxury
 - **Theme Shift**: Converted the reference Dark UI into a hospital-friendly **Turquoise, Sky Blue, Off-white, and White** palette.
 - **Visual Style**: Kept the reference geometry, typography, spacing, controls, icons, and interaction model intact while changing the visual skin:
   - **Turquoise Sidebar**: Full-height gradient sidebar clearly separated from the white content area.
@@ -53,4 +64,4 @@
 ---
 **Updated**: August 11, 2026
 **Responsive**: iPhone · iPad · notebook · laptop · narrow screens
-**Version**: 3.0 (Dark UI Model · Turquoise Light Luxury Edition)
+**Version**: 3.1 (Logo Focus & Landscape Support Edition)

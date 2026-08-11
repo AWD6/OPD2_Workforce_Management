@@ -3,7 +3,7 @@
 > **Intelligent workforce planning system for OPD 2 (Surgical Specialty Clinic)**  
 > A modern, luxurious web application for managing daily staff readiness and patient demand forecasting
 
-![Version](https://img.shields.io/badge/version-3.0-blue.svg)
+![Version](https://img.shields.io/badge/version-3.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 
@@ -191,13 +191,21 @@ OPD2_Workforce_Management/
 
 ## 🔄 Version History
 
-### v3.0 (Current)
+### v3.1 (Current)
+- ✨ **Enhanced Logo Focus**: Improved logo prominence on the Turquoise sidebar with soft glow effects and multi-layer shadows
+- 📱 **Advanced Responsive Support**: Tailored layouts for iPhone 16 Pro Max, iPad, and laptops, including a dedicated **Landscape Mode** reflow
+- 🔓 Editable training, Float, and compensatory hour inputs
+- 📊 Daily 7-hour readiness calculation
+- 🟢 Color-coded status system
+
+### v3.0
 - ✨ Converted the reference Dark UI into a Turquoise / sky / off-white Light Luxury skin without changing the core geometry or typography
 - 🎨 Turquoise gradient sidebar with layered glass detail and an off-white content canvas
 - 🎯 Hover elevation, glow, sheen sweep, focus rings, and micro-interactions retained from the reference design
 - 🖼️ Borderless premium logo presentation
 - 🔓 Editable training, Float, and compensatory hour inputs
-- 📱 Responsive layouts for iPhone, iPad, notebook, laptop, and narrow screens
+- 📱 **Advanced Responsive Support**: Tailored layouts for iPhone 16 Pro Max, iPad, and laptops, including a dedicated **Landscape Mode** reflow
+- 🖼️ **Enhanced Logo Focus**: Improved logo prominence on the Turquoise sidebar with soft glow effects and multi-layer shadows
 - 📊 Daily 7-hour readiness calculation
 - 🟢 Color-coded status system
 - 🧹 Removed role activity panel
@@ -265,4 +273,4 @@ git push origin main
 
 **Made with ❤️ for better healthcare workforce management**
 
-*Last Updated: August 11, 2026 · Version 3.0*
+*Last Updated: August 11, 2026 · Version 3.1*
