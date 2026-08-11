@@ -1,17 +1,17 @@
 :root {
-  --navy: #d9eeee;
-  --navy-deep: #091820;
-  --teal: #48d7c2;
-  --teal-soft: #173c43;
-  --blue: #72a9ff;
-  --blue-soft: #1b3654;
-  --purple: #a995ff;
-  --amber: #f6c866;
-  --ink: #d9e8e9;
-  --muted: #9aafb5;
-  --line: #2b444e;
-  --canvas: #0b1820;
-  --white: #eaf5f4;
+  --navy: #123747;
+  --navy-deep: #0b2b39;
+  --teal: #39d1bd;
+  --teal-soft: #e5f8f5;
+  --blue: #4a91ec;
+  --blue-soft: #edf5ff;
+  --purple: #8a77e9;
+  --amber: #f2b955;
+  --ink: #173b4a;
+  --muted: #70818d;
+  --line: #dce7ea;
+  --canvas: #eff7f7;
+  --white: #fff;
   --mono: "Space Mono", monospace;
   --sans: "IBM Plex Sans Thai", sans-serif;
 }
@@ -256,3 +256,64 @@ h1 { margin-top: 11px; color: var(--navy); font-size: clamp(29px, 3.2vw, 41px); 
 .status-healthy { color: #64e0a9; border-color: #286c54; background: #143c35; }
 .status-low { color: #f6cf73; border-color: #6d5725; background: #3b311b; }
 .status-high { color: #ff9589; border-color: #704039; background: #3c2527; }
+
+/* Reference design restoration: airy clinic dashboard with navy, teal, and white surfaces. */
+.app-shell { background: radial-gradient(circle at 75% 2%, rgba(57,209,189,.12), transparent 26rem), linear-gradient(140deg, #f2f9f9, #e9f2f3); }
+.brand-mark { border-color: rgba(255,255,255,.25); background: #fff; }
+.topbar { border-bottom-color: rgba(180,205,210,.5); background: rgba(255,255,255,.55); }
+.week-button { background: rgba(255,255,255,.75); }
+.week-button:hover, .week-button[aria-expanded="true"] { background: #fff; }
+.week-picker { background: #fff; box-shadow: 0 20px 45px -22px rgba(18,55,71,.4); }
+.week-picker input, .staff-setting input, .number-input { background: #f7fbfb; border-color: var(--line); }
+.metric-card { border-color: rgba(220,231,234,.85); background: rgba(255,255,255,.9); box-shadow: 0 12px 30px -28px rgba(18,55,71,.65); }
+.settings-card, .data-card, .records-section, .guide-section { border-color: rgba(220,231,234,.9); background: rgba(255,255,255,.9); box-shadow: 0 14px 37px -34px rgba(18,55,71,.7); }
+.nurse-setting { background: #f2fcfa; }
+.pn-setting { background: #f4f8ff; }
+.hp-setting { background: #fffaf0; }
+.staffing-table { min-width: 820px; }
+.staffing-columns { grid-template-columns: 1.2fr repeat(3, 1fr) 1.05fr 1.05fr; }
+.table-head { color: #94a4a9; background: #f7fafb; }
+.table-row { border-bottom-color: #edf2f3; }
+.planning-row:hover, .staffing-row:hover { background: rgba(229,248,245,.28); }
+.is-holiday { background: #fafcfc; }
+.day-initial { background: #e3f7f3; }
+.number-input:focus { background: #fff; }
+.total-cell, .ready-staff, .hours-summary { color: var(--navy); }
+.action-bar { border-color: #c9ece6; background: rgba(230,249,245,.85); }
+.action-icon { background: #fff; }
+.primary-button { border-color: var(--navy); background: var(--navy); color: #fff; }
+.primary-button:hover { background: #1d5667; }
+.secondary-button { color: #5e727a; border-color: #d9e4e6; background: #fff; }
+.secondary-button:hover { border-color: #b8cbcf; background: #f9fbfb; }
+.record-item { border-color: #e3edef; background: #fbfdfd; }
+.empty-records { border-color: #d5e3e5; color: #99a8ad; }
+.record-detail-table th, .record-detail-table td { border-bottom-color: #edf2f3; }
+.record-detail-table th { background: #f7fafb; }
+.report-row { border-color: #edf2f3; }
+.modal { background: #fff; }
+.modal-close, .report-stats > div { background: #f3f7f7; }
+.footer { border-top-color: rgba(180,205,210,.55); }
+.alert-box { color: #8e2d24; border-color: #f3c8c2; background: #fff2ef; }
+.alert-box > svg { color: #d94d3e; }
+.alert-box p { color: #a85b53; }
+.inline-button { color: #a83f35; }
+.holiday-button { border-color: #efc6c1; background: #fff; }
+.holiday-button.is-set { background: #fff1ef; }
+.guide-item.healthy { color: #168a63; border-color: #c9ebdb; background: #f1fbf6; }
+.guide-item.low { color: #a46b0b; border-color: #f1dfb5; background: #fffaf0; }
+.guide-item.high { color: #bd4136; border-color: #f2d0cc; background: #fff4f2; }
+.status-healthy { color: #168a63; border-color: #bde9d8; background: #edfbf5; }
+.status-low { color: #a46b0b; border-color: #f0d79c; background: #fff9e9; }
+.status-high { color: #bd4136; border-color: #f1c2bd; background: #fff1ef; }
+.toast { color: #fff; background: var(--navy); }
+.metric-icon.teal { color: #0c9a8a; background: var(--teal-soft); }
+.metric-icon.blue { color: #3b7fd4; background: var(--blue-soft); }
+.metric-icon.amber { color: #bc8018; background: #fff6df; }
+.metric-icon.violet { color: #6d5bc6; background: #f1efff; }
+.staff-total-box { background: var(--navy); color: #fff; }
+.staff-total-box span { color: #a9c5ca; }
+.action-copy strong { color: var(--navy); }
+.action-copy span { color: var(--muted); }
+.modal-kicker { color: #159b8a; }
+.report-stats > div { background: #f5f9f9; }
+.report-stats strong { color: var(--navy); }
