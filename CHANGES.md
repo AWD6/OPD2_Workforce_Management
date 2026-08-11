@@ -1,0 +1,55 @@
+# OPD 2 Workforce Management - Update Summary (v2.2)
+
+## Changes Applied
+
+### 1. ✅ Turquoise Light Luxury Theme with Dimension
+- **Theme Shift**: Changed from dark theme to a professional **Turquoise, Light Blue, and White** palette suitable for a hospital environment.
+- **Visual Style**: Rebuilt the light theme to preserve the previous premium interaction quality without using a dark canvas:
+  - **Glassmorphism**: Frosted translucent sidebar, topbar, cards, and modal layers.
+  - **Soft Gradients**: Turquoise, sky-blue, and white multi-stop surfaces.
+  - **Layered Depth**: Multi-layer shadows, inner highlights, borders, and ambient radial light.
+  - **Hover Elevation**: Cards, navigation, inputs, buttons, records, and guide items lift with a refined glow.
+  - **Micro-interactions**: Metric icon tilt, button sheen sweep, active navigation depth, and focus rings.
+
+### 2. ✅ Logo Presentation Refinement
+- **Style**: Removed the box/border around the logo.
+- **Placement**: Positioned elegantly in the top-left sidebar.
+- **Enhancement**: Added a subtle drop-shadow and hover animation to make it stand out with a premium feel.
+
+### 3. ✅ Data Entry Improvements (Unlocked Fields)
+- **Manual Editing**: Unlocked the following fields in the staffing table to allow direct numerical input:
+  - **อบรม/ประชุม (Training/Meeting Hours)**
+  - **Float ออก (Float Out Hours)**
+  - **เก็บชั่วโมง (Compensatory Hours)**
+- **Functionality**: Users can now type exact hours directly into these cells, and the system will use these manual values for readiness calculations.
+
+### 4. ✅ Bug Fixes
+- **Character Removal**: Successfully removed the stray "ค" character that appeared at the top-left of the screen.
+- **Encoding Fix**: Ensured all Thai text renders correctly without stray characters.
+
+### 5. ✅ Core Features Maintained
+- **Daily 7-hour Calculation**: Readiness is still based on the 7-hour work shift (08:00–16:00 minus 1-hour break).
+- **Color-Coded Status**: 
+  - 🟢 **Green**: บุคลากรเหมาะสมกับงาน
+  - 🟡 **Yellow**: บุคลากรมากกว่างาน
+  - 🔴 **Red**: งานมากกว่าบุคลากร
+- **Nurse Labels**: All instances of "พยาบาล" remain updated to "Nurse".
+- **GitHub Ready**: Includes `.nojekyll` and optimized structure for GitHub Pages deployment.
+
+## Technical Details
+
+### Files Modified
+- `index.html`: Fixed stray character, refined logo structure.
+- `style.css`: Complete rewrite to Turquoise Luxury light theme.
+- `script.js`: Updated staffing table to support manual input for all hour fields; disabled automatic overwriting of manual hours.
+
+### Color Palette (v2.2)
+- **Primary**: #12b8a3 (Turquoise)
+- **Secondary**: #4b9de8 (Sky Blue)
+- **Background**: #edf8f8 (Light Turquoise Canvas)
+- **Surface**: #ffffff with translucent glass overlays
+- **Text**: #173a4b (Deep Blue-Green)
+
+---
+**Updated**: August 11, 2026
+**Version**: 2.2 (Turquoise Light Luxury Edition)

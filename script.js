@@ -109,7 +109,7 @@ function normalizePlan(plan, index, monday) {
       leaveHp: clampNumber(legacy.leaveHp),
       trainingHours: clampNumber(legacy.trainingHours ?? legacy.trainingPeople),
       floatHours: clampNumber(legacy.floatHours),
-      collectHours: clampNumber(legacy.collectHours ?? legacy.floatPeople)
+      collectHours: clampNumber(legacy.collectHours ?? legacy.collectPeople ?? legacy.floatPeople)
     },
     roleActivity: {
       nurse: { training: clampNumber(roleActivity.nurse?.training), float: clampNumber(roleActivity.nurse?.float), collect: clampNumber(roleActivity.nurse?.collect) },
@@ -152,11 +152,11 @@ function activityTotals(plan) {
 }
 
 function syncActivityTotals(plan) {
-  const totals = activityTotals(plan);
-  plan.allocation.trainingHours = totals.training;
-  plan.allocation.floatHours = totals.float;
-  plan.allocation.collectHours = totals.collect;
-  return totals;
+  return {
+    training: plan.allocation.trainingHours || 0,
+    float: plan.allocation.floatHours || 0,
+    collect: plan.allocation.collectHours || 0
+  };
 }
 
 function calculateProduct(plan) {
@@ -176,7 +176,7 @@ function statusOf(product) {
 }
 
 function statusLabel(status) {
-  return { neutral: "ยังไม่คำนวณ", healthy: "อยู่ในเกณฑ์", low: "กำลังคนเหลือ", high: "ต้องเฝ้าระวัง" }[status];
+  return { neutral: "ยังไม่คำนวณ", healthy: "บุคลากรเหมาะสมกับงาน", low: "บุคลากรมากกว่างาน", high: "งานมากกว่าบุคลากร" }[status];
 }
 
 function inputHtml(id, value) {
@@ -191,9 +191,7 @@ function render() {
   document.getElementById("staffHp").value = staff.hp;
   document.getElementById("staffTotal").textContent = totalStaff();
   document.getElementById("totalStaff").textContent = totalStaff();
-  document.getElementById("nurseRoleTotal").textContent = `${staff.nurse} คน`;
-  document.getElementById("pnRoleTotal").textContent = `${staff.pn} คน`;
-  document.getElementById("hpRoleTotal").textContent = `${staff.hp} คน`;
+
   renderPlanningRows();
   renderStaffingRows();
   renderMetrics();
@@ -247,65 +245,28 @@ function renderStaffingRows() {
       <div>${inputHtml(`leave-nurse-${plan.key}`, a.leaveNurse)}</div>
       <div>${inputHtml(`leave-pn-${plan.key}`, a.leavePn)}</div>
       <div>${inputHtml(`leave-hp-${plan.key}`, a.leaveHp)}</div>
-      <div class="hours-summary">${totals.training}<small>ชม.</small></div>
-      <div class="hours-summary">${totals.float}<small>ชม.</small></div>
-      <div class="hours-summary">${totals.collect}<small>ชม.</small></div>
+      <div>${inputHtml(`training-hours-${plan.key}`, a.trainingHours)}</div>
+      <div>${inputHtml(`float-hours-${plan.key}`, a.floatHours)}</div>
+      <div>${inputHtml(`collect-hours-${plan.key}`, a.collectHours)}</div>
     </div>`;
   }).join("");
   currentPlans.forEach((plan) => {
-    const fields = ["leaveNurse", "leavePn", "leaveHp"];
+    const fields = ["leaveNurse", "leavePn", "leaveHp", "trainingHours", "floatHours", "collectHours"];
     fields.forEach((field) => {
-      const input = document.getElementById(`${field.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}-${plan.key}`);
-      input.addEventListener("change", (event) => {
-        plan.allocation[field] = clampNumber(event.target.value);
-        lastCalculated = false;
-        saveCurrentWeek();
-        render();
-      });
-    });
-  });
-  renderRoleActivityRows();
-}
-
-function roleHoursInput(plan, role, activity, value) {
-  return `<input id="${role}-${activity}-${plan.key}" type="number" min="0" max="56" step="0.5" value="${value}" aria-label="${role} ${activity} ชั่วโมง" />`;
-}
-
-function renderRoleActivityRows() {
-  const container = document.getElementById("roleActivityRows");
-  container.innerHTML = currentPlans.map((plan, index) => {
-    const a = plan.roleActivity;
-    return `<div class="role-activity-row ${plan.holiday ? "is-holiday" : ""}">
-      <div class="day-cell"><span class="day-initial">${DAY_SHORT[index]}</span><span><b class="day-name">${plan.label}</b><small class="day-date">${toThaiDate(new Date(plan.date))}</small></span></div>
-      ${roleHoursCell(plan, "nurse", a.nurse)}
-      ${roleHoursCell(plan, "pn", a.pn)}
-      ${roleHoursCell(plan, "hp", a.hp)}
-    </div>`;
-  }).join("");
-
-  currentPlans.forEach((plan) => {
-    ["nurse", "pn", "hp"].forEach((role) => {
-      ["training", "float", "collect"].forEach((activity) => {
-        const input = document.getElementById(`${role}-${activity}-${plan.key}`);
+      const inputId = field.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`) + `-${plan.key}`;
+      const input = document.getElementById(inputId);
+      if (input) {
         input.addEventListener("change", (event) => {
-          plan.roleActivity[role][activity] = clampNumber(event.target.value);
-          syncActivityTotals(plan);
+          plan.allocation[field] = clampNumber(event.target.value);
+          // Also update roleActivity to keep data consistent if needed, 
+          // but manual input is now the source of truth for these fields.
           lastCalculated = false;
           saveCurrentWeek();
           render();
         });
-      });
+      }
     });
   });
-}
-
-function roleHoursCell(plan, role, values) {
-  return `<div class="role-hours ${role}">
-    <label>อบรม/ประชุม${roleHoursInput(plan, role, "training", values.training)}</label>
-    <label>Float${roleHoursInput(plan, role, "float", values.float)}</label>
-    <label>เก็บชั่วโมง${roleHoursInput(plan, role, "collect", values.collect)}</label>
-    <span class="hours-summary">${values.training + values.float + values.collect}<small>ชม.</small></span>
-  </div>`;
 }
 
 function renderMetrics() {
@@ -335,7 +296,7 @@ function renderMetrics() {
   const high = active.filter((plan) => statusOf(calculateProduct(plan)) === "high");
   const alertBox = document.getElementById("alertBox");
   alertBox.hidden = !lastCalculated || high.length === 0;
-  document.getElementById("alertText").textContent = `มี ${high.length} วันที่ภาระงานสูงกว่าความพร้อมของทีม ควรตรวจสอบก่อนยืนยันตาราง`;
+  document.getElementById("alertText").textContent = `มี ${high.length} วันที่ภาระงานสูงกว่าความพร้อมของทีม ควรตรวจสอบก่อนยืนยันแผน`;
 }
 
 function renderRecords() {
