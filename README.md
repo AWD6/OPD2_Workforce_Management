@@ -1,20 +1,18 @@
-# OPD 2 · ระบบจัดสรรกำลังบุคลากร
+# CarePlan OPD 2
 
-เว็บ static สำหรับใช้งานบน GitHub Pages
+เว็บแอปสำหรับประเมินความพร้อมของบุคลากรรายวัน ห้องตรวจพิเศษศัลยกรรม 2
 
-## วิธี deploy ด้วย GitHub Actions
+## ใช้งานในเครื่อง
 
-โปรเจกต์นี้มี workflow อยู่ที่ `.github/workflows/deploy-pages.yml`
-ระบบจะ deploy อัตโนมัติทุกครั้งที่ push เข้า branch `main`
+เปิดไฟล์ `index.html` ในเว็บเบราว์เซอร์ได้ทันที
 
-1. อัปโหลดไฟล์ทั้งหมดเข้า repository โดยให้ `index.html` อยู่ที่ระดับรากของ repository
-2. ตรวจสอบว่า branch หลักชื่อ `main` ถ้าใช้ชื่ออื่น ให้แก้ชื่อ branch ใน `.github/workflows/deploy-pages.yml`
+## ใช้งานบน GitHub Pages
+
+1. สร้าง repository ใหม่บน GitHub
+2. อัปโหลดไฟล์ทั้งหมดในโฟลเดอร์นี้ไว้ที่ root ของ repository
 3. ไปที่ **Settings → Pages**
-4. ใน **Build and deployment → Source** เลือก **GitHub Actions**
-5. ไปที่แท็บ **Actions** แล้วรอ workflow ชื่อ **Deploy OPD 2 Workforce to GitHub Pages** ทำงานเสร็จ
-6. เปิด URL ที่ GitHub แสดงใน **Settings → Pages** หรือในรายละเอียดของ workflow
+4. เลือก **Deploy from a branch**
+5. เลือก branch ที่ต้องการ และโฟลเดอร์ `/ (root)`
+6. กด **Save**
 
-## หมายเหตุ
-
-ไฟล์ข้อมูลที่ผู้ใช้กรอกจะเก็บไว้ใน browser ของเครื่องนั้นผ่าน `localStorage`
-ข้อมูลจะไม่ถูกส่งขึ้น server และจะไม่ถูกรวมอยู่ใน GitHub repository
+ข้อมูลที่กรอกในระบบจะจัดเก็บไว้ในเครื่องของผู้ใช้งานผ่าน Local Storage และไม่มี backend ที่ต้องตั้งค่า
