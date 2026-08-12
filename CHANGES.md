@@ -1,8 +1,13 @@
-# OPD 2 Workforce Management - Update Summary (v3.1)
+# OPD 2 Workforce Management - Update Summary (v3.2)
 
 ## Changes Applied
 
-### 1. ✅ Logo Prominence & Sidebar Refinement
+### 1. ✅ Desktop-like Landscape Mode for Small Devices
+- **Sidebar Visibility**: Modified CSS to ensure the **Turquoise Sidebar** remains visible when a phone or small device is rotated to **Landscape orientation**, mimicking the desktop experience.
+- **Optimized Proportions**: Adjusted the sidebar and content dimensions for short landscape screens (e.g., iPhone 16 Pro Max) to prevent overcrowding while maintaining all desktop features.
+- **Dynamic Reflow**: The UI now intelligently switches between a mobile header (portrait) and a full sidebar (landscape).
+
+### 2. ✅ Logo Prominence & Sidebar Refinement
 - **Logo Focus**: Added a **Soft Glow (Radial Gradient)** and multi-layer drop shadows behind the logo to make it stand out prominently against the Turquoise sidebar.
 - **Visual Balance**: Refined the sidebar's internal gradients to ensure the logo remains the primary focal point while maintaining the luxury Turquoise aesthetic.
 
@@ -62,6 +67,6 @@
 - **Text**: #173a4b (Deep Blue-Green)
 
 ---
-**Updated**: August 11, 2026
+**Updated**: August 12, 2026
 **Responsive**: iPhone · iPad · notebook · laptop · narrow screens
-**Version**: 3.1 (Logo Focus & Landscape Support Edition)
+**Version**: 3.2 (Desktop-like Landscape Edition)

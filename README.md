@@ -3,7 +3,7 @@
 > **Intelligent workforce planning system for OPD 2 (Surgical Specialty Clinic)**  
 > A modern, luxurious web application for managing daily staff readiness and patient demand forecasting
 
-![Version](https://img.shields.io/badge/version-3.1-blue.svg)
+![Version](https://img.shields.io/badge/version-3.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 
@@ -191,9 +191,16 @@ OPD2_Workforce_Management/
 
 ## 🔄 Version History
 
-### v3.1 (Current)
+### v3.2 (Current)
+- ✨ **Desktop-like Landscape Mode**: Small devices now retain the full Turquoise sidebar when rotated sideways, providing a desktop-like experience on phones and tablets
+- 🖼️ **Enhanced Logo Focus**: Improved logo prominence on the Turquoise sidebar with soft glow effects and multi-layer shadows
+- 🔓 Editable training, Float, and compensatory hour inputs
+- 📊 Daily 7-hour readiness calculation
+- 🟢 Color-coded status system
+
+### v3.1
 - ✨ **Enhanced Logo Focus**: Improved logo prominence on the Turquoise sidebar with soft glow effects and multi-layer shadows
-- 📱 **Advanced Responsive Support**: Tailored layouts for iPhone 16 Pro Max, iPad, and laptops, including a dedicated **Landscape Mode** reflow
+- 📱 **Desktop-like Landscape Mode**: Small devices now retain the full Turquoise sidebar when rotated sideways, providing a desktop-like experience on phones and tablets
 - 🔓 Editable training, Float, and compensatory hour inputs
 - 📊 Daily 7-hour readiness calculation
 - 🟢 Color-coded status system
@@ -204,7 +211,7 @@ OPD2_Workforce_Management/
 - 🎯 Hover elevation, glow, sheen sweep, focus rings, and micro-interactions retained from the reference design
 - 🖼️ Borderless premium logo presentation
 - 🔓 Editable training, Float, and compensatory hour inputs
-- 📱 **Advanced Responsive Support**: Tailored layouts for iPhone 16 Pro Max, iPad, and laptops, including a dedicated **Landscape Mode** reflow
+- 📱 **Desktop-like Landscape Mode**: Small devices now retain the full Turquoise sidebar when rotated sideways, providing a desktop-like experience on phones and tablets
 - 🖼️ **Enhanced Logo Focus**: Improved logo prominence on the Turquoise sidebar with soft glow effects and multi-layer shadows
 - 📊 Daily 7-hour readiness calculation
 - 🟢 Color-coded status system
@@ -273,4 +280,4 @@ git push origin main
 
 **Made with ❤️ for better healthcare workforce management**
 
-*Last Updated: August 11, 2026 · Version 3.1*
+*Last Updated: August 12, 2026 · Version 3.2*
