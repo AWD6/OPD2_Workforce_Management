@@ -38,24 +38,27 @@ let monthlyCodes = readStorage(STORAGE.monthlyCodes, {});
 let currentAssignments = loadAssignments(assignmentDate);
 
 function monthKey(dateText) { return String(dateText || assignmentDate).slice(0, 7); }
-function cloneDefaultAssignments() { return DEFAULT_ASSIGNMENT_STAFF.map((person) => ({ ...person, status: "ปฏิบัติงาน", activity: "ปฏิบัติงาน", activityValue: "", break: "12.00", arrival: "", note: "", activities: [{ task: person.task, time: person.time }] })); }
+function cloneDefaultAssignments() { return DEFAULT_ASSIGNMENT_STAFF.map((person) => ({ ...person, location: "-", status: "ปฏิบัติงาน", activity: "ปฏิบัติงาน", activityValue: "", break: "12.00", arrival: "", note: "", activities: [{ task: person.task, time: person.time }] })); }
 function loadAssignments(dateText) {
   const saved = assignmentStaff[dateText];
   const result = saved?.length ? saved.map((item, index) => ({ ...cloneDefaultAssignments()[index], ...item, activities: item.activities?.length ? item.activities : [{ task: item.task || cloneDefaultAssignments()[index].task, time: item.time || cloneDefaultAssignments()[index].time }] })) : cloneDefaultAssignments();
+  if (saved?.length) result.forEach((person, index) => { if (!saved[index]?.locationLocked) person.location = "-"; });
   const day = new Date(`${dateText}T00:00:00`).getDay();
   if (!saved?.length && (day === 3 || day === 4)) result.forEach((person) => { person.time = person.time.replace(/^07:50/, "07:45"); person.activities = person.activities.map((activity) => ({ ...activity, time: activity.time.replace(/^07:50/, "07:45") })); });
   return result;
 }
-function roleKeyForAssignment(person) { return person.role === "PN" ? "pn" : person.role === "HP" ? "hp" : "nurse"; }
+function roleKeyForAssignment(person) { return person.role === "HN" ? "hn" : person.role === "PN" ? "pn" : person.role === "HP" ? "hp" : "nurse"; }
+function roleLabel(role) { return { nurse: "Nurse/RN", pn: "PN", hn: "HN", hp: "HP" }[role] || role.toUpperCase(); }
+function roleSuffix(role) { return role === "nurse" ? "Nurse" : role === "pn" ? "Pn" : role === "hn" ? "Hn" : "Hp"; }
 function syncAssignmentsToWorkforce() {
   const plan = currentPlans.find((item) => dateKey(new Date(item.date)) === assignmentDate);
   if (!plan || plan.holiday) return;
-  const allocation = { leaveNurse: 0, leavePn: 0, leaveHp: 0, trainingHours: 0, floatHours: 0, collectHours: 0 };
-  const roleActivity = { nurse: { training: 0, float: 0, collect: 0 }, pn: { training: 0, float: 0, collect: 0 }, hp: { training: 0, float: 0, collect: 0 } };
+  const allocation = { leaveNurse: 0, leavePn: 0, leaveHn: 0, leaveHp: 0, trainingHours: 0, floatHours: 0, collectHours: 0 };
+  const roleActivity = { nurse: { training: 0, float: 0, collect: 0 }, pn: { training: 0, float: 0, collect: 0 }, hn: { training: 0, float: 0, collect: 0 }, hp: { training: 0, float: 0, collect: 0 } };
   currentAssignments.forEach((person) => {
     const role = roleKeyForAssignment(person);
     const activity = person.activity || "ปฏิบัติงาน";
-    const suffix = role === "nurse" ? "Nurse" : role === "pn" ? "Pn" : "Hp";
+    const suffix = roleSuffix(role);
     if (activity === "VAC = ลา") allocation[`leave${suffix}`] += 1;
     if (activity === "ประชุม/อบรม") { const hours = Number(person.activityValue) || 1; allocation.trainingHours += hours; roleActivity[role].training += hours; }
     if (activity === "Float ออก") { const hours = netFloatHours(person.activityValue); allocation.floatHours += hours; roleActivity[role].float += hours; }
@@ -152,10 +155,11 @@ function makeDefaultPlans(monday) {
     date: addDays(monday, index).toISOString(),
     holiday: false,
     ...defaults[index],
-    allocation: { leaveNurse: 0, leavePn: 0, leaveHp: 0, trainingHours: 0, floatHours: 0, collectHours: 0 },
+    allocation: { leaveNurse: 0, leavePn: 0, leaveHn: 0, leaveHp: 0, trainingHours: 0, floatHours: 0, collectHours: 0 },
     roleActivity: {
       nurse: { training: 0, float: 0, collect: 0 },
       pn: { training: 0, float: 0, collect: 0 },
+      hn: { training: 0, float: 0, collect: 0 },
       hp: { training: 0, float: 0, collect: 0 }
     }
   }));
@@ -171,6 +175,7 @@ function normalizePlan(plan, index, monday) {
     allocation: {
       leaveNurse: clampNumber(legacy.leaveNurse),
       leavePn: clampNumber(legacy.leavePn),
+      leaveHn: clampNumber(legacy.leaveHn),
       leaveHp: clampNumber(legacy.leaveHp),
       trainingHours: clampNumber(legacy.trainingHours ?? legacy.trainingPeople),
       floatHours: clampNumber(legacy.floatHours),
@@ -179,6 +184,7 @@ function normalizePlan(plan, index, monday) {
     roleActivity: {
       nurse: { training: clampNumber(roleActivity.nurse?.training), float: clampNumber(roleActivity.nurse?.float), collect: clampNumber(roleActivity.nurse?.collect) },
       pn: { training: clampNumber(roleActivity.pn?.training), float: clampNumber(roleActivity.pn?.float), collect: clampNumber(roleActivity.pn?.collect) },
+      hn: { training: clampNumber(roleActivity.hn?.training), float: clampNumber(roleActivity.hn?.float), collect: clampNumber(roleActivity.hn?.collect) },
       hp: { training: clampNumber(roleActivity.hp?.training), float: clampNumber(roleActivity.hp?.float), collect: clampNumber(roleActivity.hp?.collect) }
     }
   };
@@ -211,7 +217,7 @@ function demand(plan) {
 
 function activityTotals(plan) {
   return ["training", "float", "collect"].reduce((totals, activity) => {
-    totals[activity] = ["nurse", "pn", "hp"].reduce((sum, role) => sum + clampNumber(plan.roleActivity?.[role]?.[activity]), 0);
+    totals[activity] = ["nurse", "pn", "hn", "hp"].reduce((sum, role) => sum + clampNumber(plan.roleActivity?.[role]?.[activity]), 0);
     return totals;
   }, { training: 0, float: 0, collect: 0 });
 }
@@ -228,7 +234,7 @@ function calculateProduct(plan) {
   if (plan.holiday) return null;
   const a = plan.allocation;
   const baseCapacityHours = totalStaff() * 7;
-  const leaveHours = (a.leaveNurse + a.leavePn + a.leaveHp) * 7;
+  const leaveHours = (a.leaveNurse + a.leavePn + a.leaveHn + a.leaveHp) * 7;
   const removedHours = leaveHours + a.trainingHours + a.floatHours + a.collectHours;
   return Math.round((demand(plan) / Math.max(baseCapacityHours - removedHours, 1)) * 100);
 }
@@ -301,38 +307,17 @@ function renderPlanningRows() {
   }));
 }
 
+function staffingRoleCell(role, plan) {
+  const values = plan.roleActivity?.[role] || { training: 0, float: 0, collect: 0 };
+  const leave = plan.allocation?.[`leave${roleSuffix(role)}`] || 0;
+  return `<div class="allocation-role-cell role-${role}"><strong>${roleLabel(role)}</strong><span><em>ลา</em><b>${leave}</b> คน</span><span><em>อ/ป</em><b>${values.training}</b> ชม.</span><span><em>Float</em><b>${values.float}</b> ชม.</span><span><em>เก็บ</em><b>${values.collect}</b> ชม.</span></div>`;
+}
 function renderStaffingRows() {
   const container = document.getElementById("staffingRows");
-  container.innerHTML = currentPlans.map((plan, index) => {
-    const a = plan.allocation;
-    const totals = syncActivityTotals(plan);
-    return `<div class="table-row staffing-row staffing-columns ${plan.holiday ? "is-holiday" : ""}">
-      <div class="day-cell"><span class="day-initial">${DAY_SHORT[index]}</span><span><b class="day-name">${plan.label}</b><small class="day-date">${toThaiDate(new Date(plan.date))}</small></span></div>
-      <div>${inputHtml(`leave-nurse-${plan.key}`, a.leaveNurse)}</div>
-      <div>${inputHtml(`leave-pn-${plan.key}`, a.leavePn)}</div>
-      <div>${inputHtml(`leave-hp-${plan.key}`, a.leaveHp)}</div>
-      <div>${inputHtml(`training-hours-${plan.key}`, a.trainingHours)}</div>
-      <div>${inputHtml(`float-hours-${plan.key}`, a.floatHours)}</div>
-      <div>${inputHtml(`collect-hours-${plan.key}`, a.collectHours)}</div>
-    </div>`;
-  }).join("");
-  currentPlans.forEach((plan) => {
-    const fields = ["leaveNurse", "leavePn", "leaveHp", "trainingHours", "floatHours", "collectHours"];
-    fields.forEach((field) => {
-      const inputId = field.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`) + `-${plan.key}`;
-      const input = document.getElementById(inputId);
-      if (input) {
-        input.addEventListener("change", (event) => {
-          plan.allocation[field] = clampNumber(event.target.value);
-          // Also update roleActivity to keep data consistent if needed, 
-          // but manual input is now the source of truth for these fields.
-          lastCalculated = false;
-          saveCurrentWeek();
-          render();
-        });
-      }
-    });
-  });
+  container.innerHTML = currentPlans.map((plan, index) => `<div class="table-row staffing-row staffing-columns ${plan.holiday ? "is-holiday" : ""}">
+    <div class="day-cell"><span class="day-initial">${DAY_SHORT[index]}</span><span><b class="day-name">${plan.label}</b><small class="day-date">${toThaiDate(new Date(plan.date))}</small></span></div>
+    ${["nurse", "pn", "hn", "hp"].map((role) => staffingRoleCell(role, plan)).join("")}
+  </div>`).join("");
 }
 
 function assignmentSelect(id, options, value) { return `<select id="${id}">${options.map((option) => `<option value="${escapeHtml(option)}" ${option === value ? "selected" : ""}>${escapeHtml(option || "—")}</option>`).join("")}</select>`; }
@@ -360,7 +345,7 @@ function renderAssignments() {
   currentAssignments.forEach((person, index) => {
     document.querySelectorAll(`[data-activity="${index}"]`).forEach((button) => button.addEventListener("click", () => { person.activity = button.dataset.value; person.activityValue = person.activity === "ประชุม/อบรม" ? "1" : person.activity === "Float ออก" ? FLOAT_PERIODS[0] : ""; syncAssignmentsToWorkforce(); saveAssignments(); render(); }));
     ["break", "activity-value"].forEach((field) => document.getElementById(`${field}-${index}`)?.addEventListener("change", (event) => { person[field === "activity-value" ? "activityValue" : field] = event.target.value; syncAssignmentsToWorkforce(); saveAssignments(); render(); }));
-    document.querySelectorAll(`[data-location="${index}"]`).forEach((button) => button.addEventListener("click", () => { person.location = button.dataset.value; saveAssignments(); renderAssignments(); }));
+    document.querySelectorAll(`[data-location="${index}"]`).forEach((button) => button.addEventListener("click", () => { person.location = button.dataset.value; person.locationLocked = true; saveAssignments(); renderAssignments(); }));
     document.querySelector(`[data-add-task="${index}"]`)?.addEventListener("click", () => { person.activities.push({ task: "อื่นๆ", time: "" }); saveAssignments(); renderAssignments(); });
     person.activities.forEach((activity, taskIndex) => {
       document.getElementById(`task-${index}-${taskIndex}`)?.addEventListener("change", (event) => { activity.task = event.target.value === "อื่นๆ" ? "อื่นๆ" : event.target.value; saveAssignments(); renderAssignments(); });
@@ -373,14 +358,15 @@ function renderAssignments() {
 }
 function formatActivity(person) { const label = person.activity || "ปฏิบัติงาน"; return label === "ประชุม/อบรม" ? `${label} ${person.activityValue || 1} ชม.` : label === "Float ออก" ? `${label} ${person.activityValue || "08.00 - 12.00 น."} · สุทธิ ${netFloatHours(person.activityValue)} ชม.` : label === "เก็บชั่วโมง" ? `${label} เลิกเที่ยง · สุทธิ 4 ชม.` : label; }
 function taskText(person) { return person.activities.map((activity, index) => `${index + 1}. ${activity.task}${activity.time ? ` (${activity.time})` : ""}`).join("<br>"); }
+function printCodeLegendHtml() { return `<div class="print-code-legend"><strong>คำอธิบาย Code และสถานที่</strong><span><b>Code อัคคีภัย</b> C1 สื่อสาร/ประสานงาน · C2 เคลื่อนย้าย · C3 ดับเพลิง</span><span><b>Code CPR</b> P1 ควบคุมสั่งการ · P2 AED/Defibrillator · P3 สารน้ำ/ยา/เจาะเลือด · P4 บันทึก CPR · P5 ทางเดินหายใจ · P6 chest compression</span><span><b>A ตามแพทย์/ประสานงาน:</b> OPD 110 โทร 34605 · OPD 10 โทร 35750–35760 · RR team โทร 38799 · ER โทร 36333 · เปล/เคลื่อนย้าย โทร 35692–35693</span></div>`; }
 function weeklyDayHtml(plan, assignments) {
-  const planDate = dateKey(new Date(plan.date));
   const leaveCount = assignments.filter((person) => person.activity === "VAC = ลา").length;
   const specialCount = assignments.filter((person) => person.activity !== "ปฏิบัติงาน" && person.activity !== "VAC = ลา").length;
   const rows = assignments.map((person) => { const isLeave = person.activity === "VAC = ลา"; return `<tr class="${isLeave ? "leave-row" : ""}"><td>${isLeave ? "VACATION" : `<b>${escapeHtml(person.name)}</b><br><small>${escapeHtml(person.role)}</small>`}</td><td><span class="status-pill">${escapeHtml(formatActivity(person))}</span><br>พัก ${escapeHtml(person.break)} น.</td><td>${isLeave ? "ตัดออกจากกำลังคน" : taskText(person)}</td><td>${isLeave ? "—" : escapeHtml(person.location || "-")}</td><td>${escapeHtml(person.fireLabel || person.fire || "—")}<br>${escapeHtml(person.cprLabel || person.cpr || "—")}</td><td>${escapeHtml(person.arrival || "")}${person.note ? `<br>${escapeHtml(person.note)}` : ""}</td></tr>`; }).join("");
   const product = calculateProduct(plan);
   const a = plan.allocation;
-  return `<section class="print-day"><div class="print-day-head"><div><h2>${plan.label} · ${toThaiDate(new Date(plan.date))}</h2><p>ตารางจ่ายงานบุคลากรประจำวัน · ข้อมูลจาก Workforce Management</p></div><div class="print-day-kpis"><span><b>${demand(plan)}</b>ผู้ป่วยคาดการณ์</span><span><b>${product === null ? "—" : `${product}%`}</b>Product</span><span><b>${leaveCount}</b>ลา</span><span><b>${specialCount}</b>กิจกรรม</span></div></div><div class="print-workforce-summary"><b>กำลังคน:</b> Nurse ${staff.nurse} · PN ${staff.pn} · HP ${staff.hp} คน &nbsp; | &nbsp; <b>ลา:</b> Nurse ${a.leaveNurse} · PN ${a.leavePn} · HP ${a.leaveHp} คน &nbsp; | &nbsp; <b>ดึงออก:</b> อบรม/ประชุม ${a.trainingHours} ชม. · Float ${a.floatHours} ชม. · เก็บชั่วโมง ${a.collectHours} ชม.</div><table><thead><tr><th>ชื่อ / ตำแหน่ง</th><th>กิจกรรม / พัก</th><th>หน้าที่ / เวลา</th><th>ปภ.1/2</th><th>Code อัคคีภัย / CPR</th><th>เวลามา / เซ็นชื่อ / หมายเหตุ</th></tr></thead><tbody>${rows}</tbody></table></section>`;
+  const roleSummary = ["nurse", "pn", "hn", "hp"].map((role) => { const values = plan.roleActivity?.[role] || { training: 0, float: 0, collect: 0 }; return `<span><b>${roleLabel(role)}</b> ลา ${a[`leave${roleSuffix(role)}`] || 0} · อ/ป ${values.training} · Float ${values.float} · เก็บ ${values.collect} ชม.</span>`; }).join("");
+  return `<section class="print-day"><div class="print-day-head"><div><h2>${plan.label} · ${toThaiDate(new Date(plan.date))}</h2><p>ตารางจ่ายงานบุคลากรประจำวัน · ข้อมูลจาก Workforce Management</p></div><div class="print-day-kpis"><span><b>${demand(plan)}</b>ผู้ป่วยคาดการณ์</span><span><b>${product === null ? "—" : `${product}%`}</b>Product</span><span><b>${leaveCount}</b>ลา</span><span><b>${specialCount}</b>กิจกรรม</span></div></div><div class="print-workforce-summary">${roleSummary}</div><table><thead><tr><th>ชื่อ / ตำแหน่ง</th><th>กิจกรรม / พัก</th><th>หน้าที่ / เวลา</th><th>ปภ.1/2</th><th>Code อัคคีภัย / CPR</th><th>เวลามา / เซ็นชื่อ / หมายเหตุ</th></tr></thead><tbody>${rows}</tbody></table>${printCodeLegendHtml()}</section>`;
 }
 function buildWeeklyPrintSchedule() {
   saveAssignments();
@@ -390,13 +376,47 @@ function buildWeeklyPrintSchedule() {
   const totalForecast = activePlans.reduce((sum, plan) => sum + demand(plan), 0);
   return `<div id="printSchedule" class="print-schedule weekly-print"><div class="print-cover"><div><h1>ตารางจ่ายงานรายสัปดาห์</h1><p>${weekLabel(selectedWeek)} · OPD 2 Workforce Management</p><p>จ่ายงานรายบุคคล → เชื่อมกำลังคน → ตรวจสอบ Product</p></div><div class="print-kpis"><div class="print-kpi"><b>${activePlans.length}</b><span>วันทำการ</span></div><div class="print-kpi"><b>${totalForecast}</b><span>ผู้ป่วยคาดการณ์</span></div><div class="print-kpi"><b>${totalStaff()}</b><span>บุคลากร</span></div></div></div><div class="print-meta"><b>หมายเหตุส่วนกลาง:</b> ${escapeHtml(note)} &nbsp; | &nbsp; <b>Code รายเดือน:</b> ${escapeHtml(getMonthlyCodes().fire)} / ${escapeHtml(getMonthlyCodes().cpr)}</div>${days}<div class="print-notes"><div class="print-note"><b>คำอธิบาย Code</b><br>อัคคีภัย: C1 สื่อสาร/ประสานงาน · C2 เคลื่อนย้าย · C3 ดับเพลิง<br>CPR: P1 ควบคุมสั่งการ · P2 AED/Defibrillator · P3 สารน้ำ/ยา/เจาะเลือด · P4 บันทึก CPR · P5 ทางเดินหายใจ · P6 chest compression</div><div class="print-footer"><b>เบอร์ติดต่อสำคัญ</b><br>OPD 110: 34605 · OPD 10: 35750–35760 · RR team: 38799<br>ER: 36333 · เปล/เคลื่อนย้าย: 35692–35693</div></div></div>`;
 }
-function generateSchedulePdf() {
+async function generateSchedulePdf() {
   saveMonthlyCodes();
-  const old = document.getElementById("printSchedule");
-  if (old) old.remove();
-  document.body.insertAdjacentHTML("beforeend", buildWeeklyPrintSchedule());
-  document.body.classList.add("print-schedule");
-  setTimeout(() => { window.print(); document.body.classList.remove("print-schedule"); document.getElementById("printSchedule")?.remove(); }, 250);
+  saveAssignments();
+  const PdfConstructor = window.jspdf?.jsPDF;
+  if (typeof html2canvas !== "function" || typeof PdfConstructor !== "function") { showToast("ไม่พบส่วนสร้าง PDF กรุณาตรวจสอบไฟล์ PDF ในโปรเจกต์"); return; }
+  const activePlans = currentPlans.filter((plan) => !plan.holiday);
+  if (!activePlans.length) { showToast("สัปดาห์นี้ไม่มีวันทำการให้สร้าง PDF"); return; }
+  const filename = `OPD2_ตารางจ่ายงาน_${weekLabel(selectedWeek).replace(/\s+/g, "_")}.pdf`;
+  const pdf = new PdfConstructor({ unit: "mm", format: "a4", orientation: "portrait", compress: true });
+  const margin = 7;
+  const pageWidth = 210;
+  const pageHeight = 297;
+  const contentWidth = pageWidth - margin * 2;
+  const exportHost = document.createElement("div");
+  exportHost.className = "download-pdf-host";
+  Object.assign(exportHost.style, { position: "absolute", left: "0", top: `${window.scrollY}px`, width: "190mm", background: "#fff", zIndex: "9999", visibility: "visible", opacity: "1" });
+  document.body.appendChild(exportHost);
+  showToast("กำลังสร้างไฟล์ PDF A4 และดาวน์โหลดลงเครื่อง…");
+  try {
+    for (let index = 0; index < activePlans.length; index += 1) {
+      const plan = activePlans[index];
+      if (index > 0) pdf.addPage("a4", "portrait");
+      exportHost.innerHTML = `<div class="print-schedule weekly-print download-pdf"><div class="print-cover"><div><h1>ตารางจ่ายงานรายสัปดาห์</h1><p>${weekLabel(selectedWeek)} · OPD 2 Workforce Management</p></div><div class="print-kpis"><div class="print-kpi"><b>${activePlans.length}</b><span>วันทำการ</span></div><div class="print-kpi"><b>${totalStaff()}</b><span>บุคลากร</span></div></div></div>${weeklyDayHtml(plan, loadAssignments(dateKey(new Date(plan.date))))}</div>`;
+      const report = exportHost.firstElementChild;
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const canvas = await html2canvas(report, { scale: 1.5, useCORS: true, backgroundColor: "#ffffff", logging: false, width: report.scrollWidth, windowWidth: report.scrollWidth });
+      const image = canvas.toDataURL("image/jpeg", 0.96);
+      const usableHeight = pageHeight - margin * 2;
+      const scale = Math.min(contentWidth / canvas.width, usableHeight / canvas.height);
+      const imageWidth = canvas.width * scale;
+      const imageHeight = canvas.height * scale;
+      pdf.addImage(image, "JPEG", margin + (contentWidth - imageWidth) / 2, margin, imageWidth, imageHeight, undefined, "FAST");
+    }
+    pdf.save(filename);
+    showToast("ดาวน์โหลดไฟล์ PDF เรียบร้อยแล้ว");
+  } catch (error) {
+    console.error(error);
+    showToast("สร้าง PDF ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+  } finally {
+    exportHost.remove();
+  }
 }
 function setupAssignmentEvents() {
   if (!document.getElementById("assignmentDayButtons")) return;
@@ -419,17 +439,15 @@ function renderMetrics() {
   document.getElementById("averageProduct").textContent = average === null ? "—" : `${average}%`;
   document.getElementById("averageDetail").textContent = average === null ? "กดคำนวณเพื่อดูภาพรวม" : average > 115 ? "มีวันที่ต้องตรวจสอบ" : "แผนอยู่ในเกณฑ์ปลอดภัย";
   const breakdown = document.getElementById("staffBreakdown");
-  breakdown.innerHTML = ["nurse", "pn", "hp"].map((role) => {
-    const label = role === "nurse" ? "Nurse" : role.toUpperCase();
-    const leave = currentPlans.reduce((sum, plan) => sum + plan.allocation[`leave${role === "nurse" ? "Nurse" : role === "pn" ? "Pn" : "Hp"}`], 0);
-    const activity = currentPlans.reduce((sum, plan) => {
-      const values = plan.roleActivity[role];
-      return sum + values.training + values.float + values.collect;
-    }, 0);
-    const training = currentPlans.reduce((sum, plan) => sum + plan.roleActivity[role].training, 0);
-    const float = currentPlans.reduce((sum, plan) => sum + plan.roleActivity[role].float, 0);
-    const collect = currentPlans.reduce((sum, plan) => sum + plan.roleActivity[role].collect, 0);
-    return `<div><span>${label} · ลา ${leave} คน</span><b>อ/ป ${training} · Float ${float} · เก็บ ${collect} ชม.</b></div>`;
+  breakdown.innerHTML = ["nurse", "pn", "hn", "hp"].map((role) => {
+    const label = roleLabel(role);
+    const leave = currentPlans.reduce((sum, plan) => sum + (plan.allocation[`leave${roleSuffix(role)}`] || 0), 0);
+    const values = currentPlans.reduce((totals, plan) => {
+      const item = plan.roleActivity?.[role] || { training: 0, float: 0, collect: 0 };
+      totals.training += item.training; totals.float += item.float; totals.collect += item.collect;
+      return totals;
+    }, { training: 0, float: 0, collect: 0 });
+    return `<div><span>${label} · ลา ${leave} คน</span><b>อ/ป ${values.training} · Float ${values.float} · เก็บ ${values.collect} ชม.</b></div>`;
   }).join("");
   const high = active.filter((plan) => statusOf(calculateProduct(plan)) === "high");
   const alertBox = document.getElementById("alertBox");
@@ -469,8 +487,8 @@ function recordDetailsHtml(record) {
   const recordStaff = record.staff || { nurse: staff.nurse, pn: staff.pn, hp: staff.hp };
   return `<div class="record-detail-table"><table><thead><tr><th>วัน / วันที่</th><th>ผู้รับบริการ</th><th>Product</th><th>บุคลากรประจำ</th><th>ลา Nurse / PN / HP</th><th>อบรม/ประชุม</th><th>Float ออก</th><th>เก็บชั่วโมง</th><th>กิจกรรมแยกตำแหน่ง</th></tr></thead><tbody>${record.plans.map((plan) => {
     const a = plan.allocation;
-    const roleText = ["nurse", "pn", "hp"].map((role) => {
-      const label = role === "nurse" ? "Nurse" : role.toUpperCase();
+    const roleText = ["nurse", "pn", "hn", "hp"].map((role) => {
+      const label = roleLabel(role);
       const values = plan.roleActivity?.[role] || { training: 0, float: 0, collect: 0 };
       return `${label}: อ/ป ${values.training} · Float ${values.float} · เก็บ ${values.collect} ชม.`;
     }).join("<br />");
@@ -482,7 +500,7 @@ function saveRecord() {
   const active = currentPlans.filter((plan) => !plan.holiday);
   const products = active.map(calculateProduct).filter((value) => value !== null);
   const average = products.length ? Math.round(products.reduce((sum, value) => sum + value, 0) / products.length) : null;
-  const leave = currentPlans.reduce((sum, plan) => sum + plan.allocation.leaveNurse + plan.allocation.leavePn + plan.allocation.leaveHp, 0);
+  const leave = currentPlans.reduce((sum, plan) => sum + plan.allocation.leaveNurse + plan.allocation.leavePn + plan.allocation.leaveHn + plan.allocation.leaveHp, 0);
   const trainingHours = currentPlans.reduce((sum, plan) => sum + syncActivityTotals(plan).training, 0);
   const floatHours = currentPlans.reduce((sum, plan) => sum + syncActivityTotals(plan).float, 0);
   const collectHours = currentPlans.reduce((sum, plan) => sum + syncActivityTotals(plan).collect, 0);

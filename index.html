@@ -199,16 +199,16 @@
             <div class="card-header">
               <div>
                 <div class="title-row"><h2>การจัดสรรกำลังคน</h2><span class="editable-pill">แก้ไขได้</span></div>
-                <p>บันทึกคนลา และเวลาที่ถูกดึงออกจากงานประจำ โดยคิดตามเวลาทำงานจริง 7 ชั่วโมงต่อเวร</p>
+                <p>ข้อมูลจากตารางจ่ายงานรายบุคคลจะอัปเดตอัตโนมัติ แยกจำนวนลาและชั่วโมง อบรม/ประชุม, Float ออก และเก็บชั่วโมงตามตำแหน่ง</p>
               </div>
               <div class="role-legend">
-                <span class="role-dot nurse-dot">Nurse</span><span class="role-dot pn-dot">PN</span><span class="role-dot hp-dot">HP</span>
+                <span class="role-dot nurse-dot">Nurse/RN</span><span class="role-dot pn-dot">PN</span><span class="role-dot hn-dot">HN</span><span class="role-dot hp-dot">HP</span>
               </div>
             </div>
             <div class="table-scroll">
               <div class="staffing-table">
                 <div class="table-row table-head staffing-columns">
-                  <div>วันทำการ</div><div class="nurse-head">ลา Nurse<br /><small>(คน)</small></div><div class="pn-head">ลา PN<br /><small>(คน)</small></div><div class="hp-head">ลา HP<br /><small>(คน)</small></div><div>อบรม/ประชุม<br /><small>(ชม.)</small></div><div>Float ออก<br /><small>(ชม.)</small></div><div>เก็บชั่วโมง<br /><small>(ชม.)</small></div>
+                  <div>วันทำการ</div><div class="nurse-head">Nurse / RN</div><div class="pn-head">PN</div><div class="hn-head">HN</div><div class="hp-head">HP</div>
                 </div>
                 <div id="staffingRows"></div>
               </div>
@@ -260,6 +260,9 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="html2canvas.min.js"></script>
+    <script src="jspdf.umd.min.js"></script>
+    <script src="html2pdf.bundle.min.js"></script>
     <script src="script.js"></script>
   </body>
 </html>
