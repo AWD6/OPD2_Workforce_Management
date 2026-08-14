@@ -1225,3 +1225,51 @@ body.print-schedule #printSchedule { display:block; }
 @media (max-width: 900px) {
   .task-line.has-custom-task { grid-template-columns: 18px minmax(90px, .8fr) minmax(130px, 1.2fr) minmax(90px, .8fr); }
 }
+
+/* v9 status highlights and aligned workforce metrics */
+.assignment-row.is-training {
+  background: linear-gradient(90deg, #fffdf0 0%, #fff3b8 100%) !important;
+  box-shadow: inset 4px 0 #f2c94c, inset 0 1px rgba(255,255,255,.9);
+}
+.assignment-row.is-leave {
+  background: linear-gradient(90deg, #fff0ed 0%, #ffd8d0 100%) !important;
+  box-shadow: inset 4px 0 #e85d4e, inset 0 1px rgba(255,255,255,.9);
+}
+.assignment-row.is-collect {
+  background: linear-gradient(90deg, #eef8ff 0%, #cfeaff 100%) !important;
+  box-shadow: inset 4px 0 #4b9de8, inset 0 1px rgba(255,255,255,.9);
+}
+.assignment-row.is-float {
+  background: linear-gradient(90deg, #f0f7ff 0%, #e0efff 100%) !important;
+  box-shadow: inset 4px 0 #2f80ed, inset 0 1px rgba(255,255,255,.9);
+}
+.assignment-row.is-training .assignment-person strong { color: #8a6800; }
+.assignment-row.is-leave .assignment-person strong { color: #a83f35; }
+.assignment-row.is-collect .assignment-person strong { color: #21649b; }
+.assignment-row.is-float .assignment-person strong { color: #1d5eb8; }
+.task-line.float-task,
+.task-line.float-task select,
+.task-line.float-task input { color: #1264c4 !important; }
+.task-line.float-task select { border-color: rgba(47,128,237,.55); background: #eff6ff; }
+
+.allocation-role-cell {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  align-content: start;
+  min-width: 0;
+}
+.allocation-role-cell strong { display:block; margin-bottom: 2px; }
+.allocation-role-cell span {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 72px;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 18px;
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(23,58,75,.08);
+}
+.allocation-role-cell span:last-child { border-bottom: 0; }
+.allocation-role-cell em { text-align: left; white-space: nowrap; }
+.allocation-role-cell b { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.allocation-role-cell b small { color: var(--opd-muted); font-size: 8px; font-weight: 700; }
