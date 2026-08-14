@@ -1416,3 +1416,85 @@ body { font-size: var(--opd-body-size); }
   .allocation-role-cell span { font-size: 11px; }
   .allocation-role-cell b { font-size: 12px; }
 }
+
+/* v13 balanced responsive assignment layout */
+.assignment-card .assignment-head,
+.assignment-card .assignment-row {
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: minmax(82px, .9fr) minmax(138px, 1.35fr) minmax(52px, .55fr) minmax(170px, 2.2fr) minmax(120px, 1.35fr) minmax(112px, 1.25fr) minmax(102px, 1.15fr);
+  gap: 8px;
+}
+.assignment-card .assignment-row > *,
+.assignment-card .assignment-head > * { min-width: 0; }
+.assignment-card .assignment-head { padding-left: 12px; padding-right: 12px; }
+.assignment-card .assignment-row { padding: 10px 12px; }
+.assignment-card .assignment-person,
+.assignment-card .activity-cell,
+.assignment-card .tasks-cell,
+.assignment-card .location-buttons,
+.assignment-card .code-cell { min-width: 0; }
+.assignment-card .activity-buttons { gap: 5px; }
+.assignment-card .activity-button { overflow-wrap: anywhere; }
+.assignment-card .location-buttons { gap: 4px; }
+.assignment-card .location-button { overflow-wrap: anywhere; }
+.assignment-card .task-line { grid-template-columns: 18px minmax(0, 1.1fr) minmax(0, .9fr); }
+.assignment-card .task-line.has-custom-task { grid-template-columns: 18px minmax(0, .8fr) minmax(0, 1.2fr) minmax(0, .9fr); }
+
+@media (min-width: 901px) and (max-width: 1400px) {
+  .assignment-card .assignment-head,
+  .assignment-card .assignment-row {
+    grid-template-columns: minmax(78px, .85fr) minmax(125px, 1.25fr) minmax(48px, .5fr) minmax(150px, 1.85fr) minmax(108px, 1.15fr) minmax(100px, 1.05fr) minmax(92px, .95fr);
+    gap: 6px;
+  }
+  .assignment-card .assignment-row { padding: 9px 10px; }
+  .assignment-card .task-line { grid-template-columns: 16px minmax(0, 1.05fr) minmax(0, .95fr); }
+  .assignment-card .task-line.has-custom-task { grid-template-columns: 16px minmax(0, .75fr) minmax(0, 1.25fr) minmax(0, .9fr); }
+}
+
+@media (max-width: 900px) {
+  .assignment-card .table-scroll { overflow: visible; }
+  .assignment-card .assignment-table { min-width: 0 !important; }
+  .assignment-card .assignment-head { display: none; }
+  .assignment-card .assignment-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 10px 12px;
+    padding: 13px;
+    border: 1px solid rgba(75,157,232,.18);
+    border-radius: 14px;
+    box-shadow: 0 10px 24px -20px rgba(23,58,75,.8);
+  }
+  .assignment-card .assignment-row > * { grid-column: 1 / -1; }
+  .assignment-card .assignment-row > :nth-child(1) { padding-bottom: 5px; border-bottom: 1px solid rgba(23,58,75,.1); }
+  .assignment-card .assignment-row > :nth-child(2),
+  .assignment-card .assignment-row > :nth-child(3) { grid-column: span 1; }
+  .assignment-card .assignment-row > :nth-child(6),
+  .assignment-card .assignment-row > :nth-child(7) { grid-column: span 1; }
+  .assignment-card .assignment-row > :nth-child(2)::before { content: "สถานะการปฏิบัติงาน"; display: block; margin-bottom: 5px; color: var(--opd-muted); font-size: 11px; font-weight: 800; }
+  .assignment-card .assignment-row > :nth-child(3)::before { content: "เวลาพัก"; display: block; margin-bottom: 5px; color: var(--opd-muted); font-size: 11px; font-weight: 800; }
+  .assignment-card .assignment-row > :nth-child(4)::before { content: "หน้าที่ / เวลา"; display: block; margin-bottom: 5px; color: var(--opd-muted); font-size: 11px; font-weight: 800; }
+  .assignment-card .assignment-row > :nth-child(5)::before { content: "ปภ.1/2"; display: block; margin-bottom: 5px; color: var(--opd-muted); font-size: 11px; font-weight: 800; }
+  .assignment-card .assignment-row > :nth-child(6)::before { content: "Code อัคคีภัย / CPR"; display: block; margin-bottom: 5px; color: var(--opd-muted); font-size: 11px; font-weight: 800; }
+  .assignment-card .assignment-row > :nth-child(7)::before { content: "เวลามา / เซ็นชื่อ / หมายเหตุ"; display: block; margin-bottom: 5px; color: var(--opd-muted); font-size: 11px; font-weight: 800; }
+  .assignment-card .activity-buttons { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .assignment-card .activity-button { min-height: 34px; font-size: 11px; }
+  .assignment-card .location-button { min-height: 32px; font-size: 10px; }
+  .assignment-card .task-line,
+  .assignment-card .task-line.has-custom-task { grid-template-columns: 20px minmax(0, 1fr) minmax(0, 1fr); }
+  .assignment-card .task-line.has-custom-task { grid-template-columns: 20px minmax(0, .8fr) minmax(0, 1.2fr) minmax(0, .9fr); }
+}
+@media (max-width: 560px) {
+  .assignment-card .assignment-row { grid-template-columns: 1fr; margin-left: 8px; margin-right: 8px; }
+  .assignment-card .assignment-row > :nth-child(2),
+  .assignment-card .assignment-row > :nth-child(3),
+  .assignment-card .assignment-row > :nth-child(6),
+  .assignment-card .assignment-row > :nth-child(7) { grid-column: 1 / -1; }
+  .assignment-card .activity-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .assignment-card .task-line,
+  .assignment-card .task-line.has-custom-task { grid-template-columns: 20px minmax(0, 1fr) minmax(0, 1fr); }
+  .assignment-card .task-line.has-custom-task { grid-template-columns: 20px 1fr; }
+  .assignment-card .task-line.has-custom-task input:first-of-type { grid-column: 2; }
+  .assignment-card .task-line.has-custom-task input:last-of-type { grid-column: 2; }
+}

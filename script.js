@@ -39,18 +39,23 @@ function taskIsFloat(task) { return /float/i.test(String(task || "")); }
 const LOCATION_OPTIONS = ["-", "ปภ.1 คัดกรอง", "ปภ.1 พบแพทย์", "ปภ.1 ห้อง Cysto", "ปภ.2 คัดกรอง", "ปภ.2 พบแพทย์", "ปภ.2 ห้อง Cysto"];
 const FIRE_CODE_OPTIONS = ["C1 สื่อสาร/ประสานงาน", "C2 เคลื่อนย้าย", "C3 ดับเพลิง"];
 const CPR_CODE_OPTIONS = ["A ตามแพทย์/ประสานงาน", "P1 ควบคุมสั่งการ", "P2 AED/Defibrillator", "P3 สารน้ำ/ยา/เจาะเลือด", "P4 บันทึก CPR", "P5 ทางเดินหายใจ", "P6 chest compression"];
-const TASK_OPTIONS = ["ช่วยทั่วไป", "คัดกรอง", "นัด/แนะนำ Admit", "Treatment", "Cysto", "ช่วย Cysto", "เรียกพบแพทย์", "Float OR Minor", "Float OPD 10", "Float OPD 3", "อื่นๆ"];
+const TASK_OPTIONS = ["ช่วยทั่วไป", "คัดกรอง", "นัด/แนะนำ", "นัดแนะนำ/Admit", "Treatment", "Cysto", "ช่วย Cysto", "เรียกพบแพทย์", "Float OPD 3", "Float OPD 10", "Float OR Minor", "อื่นๆ"];
+function normalizeTaskName(task) {
+  const value = String(task || "").trim();
+  if (["นัด/แนะนำ Admit", "นัด / แนะนำ Admit", "นัดแนะนำ / Admit"].includes(value)) return "นัดแนะนำ/Admit";
+  return value;
+}
 let assignmentDate = dateKey(new Date());
 let assignmentStaff = readStorage(STORAGE.schedules, {});
 let monthlyCodes = readStorage(STORAGE.monthlyCodes, {});
 let currentAssignments = loadAssignments(assignmentDate);
 
 function monthKey(dateText) { return String(dateText || assignmentDate).slice(0, 7); }
-function cloneDefaultAssignments() { return DEFAULT_ASSIGNMENT_STAFF.map((person) => ({ ...person, time: WORKDAY_TIMES[1], location: "-", status: "ปฏิบัติงาน", activity: "ปฏิบัติงาน", activityValue: "", break: "12.00", arrival: "", note: "", taskOverride: false, activities: [{ task: person.task, time: WORKDAY_TIMES[1] }] })); }
+function cloneDefaultAssignments() { return DEFAULT_ASSIGNMENT_STAFF.map((person) => ({ ...person, time: WORKDAY_TIMES[1], location: "-", status: "ปฏิบัติงาน", activity: "ปฏิบัติงาน", activityValue: "", break: "12.00", arrival: "", note: "", taskOverride: false, activities: [{ task: normalizeTaskName(person.task), time: WORKDAY_TIMES[1] }] })); }
 function loadAssignments(dateText) {
   const saved = assignmentStaff[dateText];
   const defaults = cloneDefaultAssignments();
-  const result = saved?.length ? saved.map((item, index) => ({ ...defaults[index], ...item, activities: item.activities?.length ? item.activities : [{ task: item.task || defaults[index].task, time: item.time || defaults[index].time }] })) : defaults;
+  const result = saved?.length ? saved.map((item, index) => ({ ...defaults[index], ...item, activities: (item.activities?.length ? item.activities : [{ task: item.task || defaults[index].task, time: item.time || defaults[index].time }]).map((activity) => ({ ...activity, task: normalizeTaskName(activity.task) })) })) : defaults;
   if (saved?.length) result.forEach((person, index) => { if (!saved[index]?.locationLocked) person.location = "-"; });
   const defaultTime = workTimeForDate(dateText);
   result.forEach((person) => {
