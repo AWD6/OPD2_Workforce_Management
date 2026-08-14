@@ -1273,3 +1273,146 @@ body.print-schedule #printSchedule { display:block; }
 .allocation-role-cell em { text-align: left; white-space: nowrap; }
 .allocation-role-cell b { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .allocation-role-cell b small { color: var(--opd-muted); font-size: 8px; font-weight: 700; }
+
+/* v10 readability pass: larger type without losing the compact notebook layout */
+:root {
+  --opd-body-size: 15px;
+  --opd-small-size: 12px;
+}
+body { font-size: var(--opd-body-size); }
+.nav-label { font-size: 11px; }
+.nav-item { font-size: 14px; padding-top: 13px; padding-bottom: 13px; }
+.brand strong { font-size: 17px; }
+.brand span { font-size: 10px; }
+.privacy-note strong { font-size: 12px; }
+.privacy-note span, .reset-link { font-size: 11px; }
+.credit-banner span { font-size: 10px; }
+.credit-banner b { font-size: 11px; }
+.breadcrumb, .updated-time { font-size: 13px; }
+.updated-time strong { font-size: 12px; }
+.hero p { font-size: 14px; }
+.week-button { font-size: 13px; }
+.week-picker label { font-size: 12px; }
+.week-picker input { font-size: 13px; }
+.text-button { font-size: 11px; }
+.metric-label { font-size: 12px; }
+.metric-value { font-size: 27px; }
+.metric-card small { font-size: 11px; }
+.metric-breakdown, .metric-breakdown b { font-size: 10px; }
+.section-heading h2, .card-header h2 { font-size: 18px; }
+.section-heading p, .card-header p { font-size: 12px; }
+.editable-pill { font-size: 10px; }
+.staff-setting { font-size: 13px; }
+.staff-setting span, .staff-setting input { font-size: 11px; }
+.alert-box strong { font-size: 13px; }
+.alert-box p, .inline-button { font-size: 11px; }
+.table-head { font-size: 10px; }
+.table-head small { font-size: 10px; }
+.day-name { font-size: 13px; }
+.day-date { font-size: 11px; }
+.number-input { font-size: 13px; }
+.total-cell { font-size: 14px; }
+.total-cell span { font-size: 10px; }
+.day-status, .holiday-button { font-size: 10px; }
+.allocation-note { font-size: 11px; }
+.action-copy strong { font-size: 13px; }
+.action-copy span { font-size: 11px; }
+.primary-button, .secondary-button { font-size: 12px; }
+.empty-records { font-size: 12px; }
+.record-week strong { font-size: 13px; }
+.record-week span, .record-metric span, .record-summary { font-size: 11px; }
+.record-metric strong { font-size: 15px; }
+.record-details summary { font-size: 11px; }
+.record-detail-table table { font-size: 10px; }
+
+/* Assignment workspace: readable controls while keeping every column bounded. */
+.assignment-card .card-header p,
+.assignment-card .assignment-toolbar,
+.assignment-card .assignment-reference { font-size: 13px; line-height: 1.55; }
+.assignment-card .week-label,
+.assignment-card #assignmentWeekLabel { font-size: 14px; }
+.assignment-card .assignment-day-button { font-size: 11px; }
+.assignment-card .assignment-day-button small { font-size: 10px; }
+.assignment-card .mini-field label { font-size: 11px; }
+.assignment-card .mini-field input,
+.assignment-card .mini-field select { font-size: 12px; }
+.assignment-card .assignment-head { font-size: 10px; }
+.assignment-card .assignment-person strong { font-size: 12px; }
+.assignment-card .assignment-person small { font-size: 10px; }
+.assignment-card .work-status { font-size: 11px; padding: 5px 8px; }
+.assignment-card .activity-button { font-size: 10px; min-height: 30px; padding: 5px 4px; }
+.assignment-card .location-button { font-size: 9px; min-height: 28px; padding: 5px 4px; }
+.assignment-card .assignment-row input,
+.assignment-card .assignment-row select { font-size: 10px; min-height: 31px; }
+.assignment-card .task-line { font-size: 10px; }
+.assignment-card .add-task-button { font-size: 10px; }
+.assignment-card .code-cell select { font-size: 10px; }
+
+/* Workforce cards: larger labels and stable numeric columns. */
+.staffing-columns { gap: 10px; }
+.allocation-role-cell { padding: 10px 12px; gap: 6px; }
+.allocation-role-cell strong { font-size: 13px; }
+.allocation-role-cell span { font-size: 11px; min-height: 21px; }
+.allocation-role-cell b { font-size: 12px; }
+.allocation-role-cell b small { font-size: 9px; }
+
+/* Downloaded A4 report: readable at normal phone/desktop PDF zoom. */
+.download-pdf .print-day-head h2 { font-size: 21px; }
+.download-pdf .print-day-head p { font-size: 11px; }
+.download-pdf .print-day-kpis span { font-size: 9px; min-width: 55px; padding: 6px; }
+.download-pdf .print-day-kpis b { font-size: 14px; }
+.download-pdf .print-workforce-summary { font-size: 10px; line-height: 1.45; padding: 9px 10px; }
+.download-pdf table { font-size: 10px; }
+.download-pdf th { font-size: 9.5px; padding: 8px 5px; }
+.download-pdf td { font-size: 10px; padding: 7px 5px; line-height: 1.35; }
+.download-pdf .status-pill { font-size: 9.5px; padding: 3px 6px; }
+.download-pdf .print-code-legend { font-size: 9.5px; line-height: 1.45; padding: 8px 10px; }
+.download-pdf .print-code-legend strong { font-size: 11px; }
+
+@media (min-width: 901px) and (max-width: 1400px) {
+  .assignment-card .assignment-head { font-size: 9px; }
+  .assignment-card .assignment-row input,
+  .assignment-card .assignment-row select { font-size: 9px; }
+  .assignment-card .activity-button { font-size: 9px; }
+  .assignment-card .location-button { font-size: 8.5px; }
+  .assignment-card .assignment-person strong { font-size: 11px; }
+  .assignment-card .assignment-person small { font-size: 9px; }
+  .assignment-card .task-line { font-size: 9px; }
+  .staffing-columns { gap: 7px; }
+  .allocation-role-cell { padding: 8px 9px; }
+  .allocation-role-cell strong { font-size: 12px; }
+  .allocation-role-cell span { font-size: 10px; }
+}
+
+/* v10b final readability: prioritize legibility in the dense assignment grid */
+.table-head { font-size: 11px; letter-spacing: .04em; }
+.table-head small { font-size: 11px; }
+.assignment-card .assignment-head { font-size: 11px; }
+.assignment-card .assignment-person strong { font-size: 13px; }
+.assignment-card .assignment-person small { font-size: 11px; }
+.assignment-card .work-status { font-size: 12px; }
+.assignment-card .activity-button { font-size: 11px; min-height: 32px; line-height: 1.25; }
+.assignment-card .assignment-row input,
+.assignment-card .assignment-row select,
+.assignment-card .code-cell select { font-size: 11px; }
+.assignment-card .task-line { font-size: 10.5px; }
+.assignment-card .location-button { font-size: 10px; }
+.assignment-card .add-task-button { font-size: 11px; }
+.allocation-role-cell strong { font-size: 14px; }
+.allocation-role-cell span { font-size: 12px; }
+.allocation-role-cell b { font-size: 13px; }
+.allocation-role-cell b small { font-size: 10px; }
+@media (min-width: 901px) and (max-width: 1400px) {
+  .assignment-card .assignment-head { font-size: 10px; }
+  .assignment-card .assignment-person strong { font-size: 12px; }
+  .assignment-card .assignment-person small { font-size: 10px; }
+  .assignment-card .activity-button { font-size: 10px; }
+  .assignment-card .assignment-row input,
+  .assignment-card .assignment-row select,
+  .assignment-card .code-cell select { font-size: 10px; }
+  .assignment-card .task-line { font-size: 10px; }
+  .assignment-card .location-button { font-size: 9px; }
+  .allocation-role-cell strong { font-size: 13px; }
+  .allocation-role-cell span { font-size: 11px; }
+  .allocation-role-cell b { font-size: 12px; }
+}
