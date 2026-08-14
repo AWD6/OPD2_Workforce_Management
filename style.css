@@ -1498,3 +1498,52 @@ body { font-size: var(--opd-body-size); }
   .assignment-card .task-line.has-custom-task input:first-of-type { grid-column: 2; }
   .assignment-card .task-line.has-custom-task input:last-of-type { grid-column: 2; }
 }
+
+/* v13 remove-task control */
+.assignment-card .remove-task-button {
+  min-width: 42px;
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 1px solid rgba(211, 76, 82, .34);
+  border-radius: 8px;
+  background: #fff5f5;
+  color: #b4232d;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+.assignment-card .remove-task-button:hover,
+.assignment-card .remove-task-button:focus-visible { background: #d34c52; color: #fff; transform: translateY(-1px); }
+@media (max-width: 900px) {
+  .assignment-card .remove-task-button { min-height: 32px; font-size: 11px; }
+}
+
+/* v14 multi-select Code toggles */
+.assignment-card .code-cell { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.assignment-card .code-group { min-width: 0; }
+.assignment-card .code-group > small { display: block; margin-bottom: 4px; color: var(--opd-muted); font-size: 10px; font-weight: 800; }
+.assignment-card .code-toggle-list { display: flex; flex-wrap: wrap; gap: 4px; align-items: stretch; }
+.assignment-card .code-toggle {
+  max-width: 100%;
+  min-height: 27px;
+  padding: 4px 6px;
+  border: 1px solid rgba(49, 127, 173, .22);
+  border-radius: 7px;
+  background: #f7fbfd;
+  color: #426270;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.2;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
+}
+.assignment-card .code-toggle:hover,
+.assignment-card .code-toggle:focus-visible { border-color: #1c9d9a; color: #087b79; transform: translateY(-1px); }
+.assignment-card .code-toggle.is-active { border-color: #159c98; background: linear-gradient(135deg, #e0faf5, #d5f0ff); color: #056e73; box-shadow: 0 3px 10px rgba(21, 156, 152, .14); }
+@media (max-width: 900px) {
+  .assignment-card .code-toggle { min-height: 30px; font-size: 10px; }
+}
