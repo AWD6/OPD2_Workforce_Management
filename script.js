@@ -38,7 +38,7 @@ function assignmentRowClass(person) { return person.activity === "VAC = ลา" 
 function taskIsFloat(task) { return /float/i.test(String(task || "")); }
 const LOCATION_OPTIONS = ["-", "ปภ.1 คัดกรอง", "ปภ.1 พบแพทย์", "ปภ.1 ห้อง Cysto", "ปภ.2 คัดกรอง", "ปภ.2 พบแพทย์", "ปภ.2 ห้อง Cysto"];
 const FIRE_CODE_OPTIONS = ["C1 สื่อสาร/ประสานงาน", "C2 เคลื่อนย้าย", "C3 ดับเพลิง"];
-const CPR_CODE_OPTIONS = ["P1 ควบคุมสั่งการ", "P2 AED/Defibrillator", "P3 สารน้ำ/ยา/เจาะเลือด", "P4 บันทึก CPR", "P5 ทางเดินหายใจ", "P6 chest compression"];
+const CPR_CODE_OPTIONS = ["A ตามแพทย์/ประสานงาน", "P1 ควบคุมสั่งการ", "P2 AED/Defibrillator", "P3 สารน้ำ/ยา/เจาะเลือด", "P4 บันทึก CPR", "P5 ทางเดินหายใจ", "P6 chest compression"];
 const TASK_OPTIONS = ["ช่วยทั่วไป", "คัดกรอง", "นัด/แนะนำ Admit", "Treatment", "Cysto", "ช่วย Cysto", "เรียกพบแพทย์", "Float OR Minor", "Float OPD 10", "Float OPD 3", "อื่นๆ"];
 let assignmentDate = dateKey(new Date());
 let assignmentStaff = readStorage(STORAGE.schedules, {});
@@ -54,6 +54,7 @@ function loadAssignments(dateText) {
   if (saved?.length) result.forEach((person, index) => { if (!saved[index]?.locationLocked) person.location = "-"; });
   const defaultTime = workTimeForDate(dateText);
   result.forEach((person) => {
+    if (person.name === "มณีวรรณ") { person.cpr = "A"; person.cprLabel = "A ตามแพทย์/ประสานงาน"; }
     if (!person.timeLocked && isAutoWorkTime(person.time)) person.time = defaultTime;
     person.activities = (person.activities || []).map((activity) => (!activity.timeLocked && isAutoWorkTime(activity.time)) ? { ...activity, time: defaultTime } : activity);
   });
@@ -116,6 +117,18 @@ function syncAllAssignmentsToWorkforce() {
 function getMonthlyCodes() { return monthlyCodes[monthKey(assignmentDate)] || { fire: "C2", cpr: "P1" }; }
 function saveMonthlyCodes() { monthlyCodes[monthKey(assignmentDate)] = { fire: document.getElementById("monthlyFireCode").value.trim() || "C2", cpr: document.getElementById("monthlyCprCode").value.trim() || "P1" }; writeStorage(STORAGE.monthlyCodes, monthlyCodes); }
 function dateThaiLong(dateText) { const date = new Date(`${dateText}T00:00:00`); const days = ["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์"]; const months = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"]; return `วัน${days[date.getDay()]}ที่ ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear() + 543}`; }
+function thaiMonthName(date) { return ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"][date.getMonth()]; }
+function thaiPdfFilename(monday) {
+  const start = getMonday(monday);
+  const end = addDays(start, 4);
+  const startYear = start.getFullYear() + 543;
+  const endYear = end.getFullYear() + 543;
+  const sameMonth = start.getMonth() === end.getMonth() && startYear === endYear;
+  const dateRange = sameMonth
+    ? `${start.getDate()} - ${end.getDate()} ${thaiMonthName(end)} ${endYear}`
+    : `${start.getDate()} ${thaiMonthName(start)} ${startYear} - ${end.getDate()} ${thaiMonthName(end)} ${endYear}`;
+  return `ตารางจ่ายงาน OPD 2 ประจำวันที่ ${dateRange}.pdf`;
+}
 function escapeHtml(value) { return String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", "\"":"&quot;" }[char])); }
 
 let staff = readStorage(STORAGE.staff, DEFAULT_STAFF);
@@ -424,7 +437,7 @@ async function generateSchedulePdf() {
   if (typeof html2canvas !== "function" || typeof PdfConstructor !== "function") { showToast("ไม่พบส่วนสร้าง PDF กรุณาตรวจสอบไฟล์ PDF ในโปรเจกต์"); return; }
   const activePlans = currentPlans.filter((plan) => !plan.holiday);
   if (!activePlans.length) { showToast("สัปดาห์นี้ไม่มีวันทำการให้สร้าง PDF"); return; }
-  const filename = `OPD2_ตารางจ่ายงาน_${weekLabel(selectedWeek).replace(/\s+/g, "_")}.pdf`;
+  const filename = thaiPdfFilename(selectedWeek);
   const pdf = new PdfConstructor({ unit: "mm", format: "a4", orientation: "portrait", compress: true });
   const margin = 7;
   const pageWidth = 210;
