@@ -795,3 +795,276 @@ h1 { color: var(--navy); text-shadow: 0 2px 12px rgba(21,104,119,.08); }
   .metric-value { font-size: 19px; }
   .metric-breakdown { font-size: 8px; }
 }
+
+/* Assignment schedule workspace */
+.assignment-card { overflow: hidden; }
+.assignment-actions { display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; }
+.mini-field { display:flex; flex-direction:column; gap:6px; color:var(--muted,#6b7c87); font-size:12px; font-weight:700; }
+.mini-field input,.mini-field select { min-height:38px; border:1px solid rgba(23,58,75,.16); border-radius:10px; background:#fff; padding:8px 10px; color:var(--ink,#173a4b); font:inherit; font-weight:600; }
+.monthly-code-grid { display:grid; grid-template-columns:repeat(3,minmax(150px,1fr)) 2fr; gap:12px; padding:16px; background:rgba(18,184,163,.06); border:1px solid rgba(18,184,163,.12); border-radius:14px; margin:18px 0; }
+.wide-field { min-width:200px; }
+.assignment-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:0 0 12px; color:var(--muted,#6b7c87); font-size:13px; }
+.assignment-table { min-width:1180px; }
+.assignment-head,.assignment-row { display:grid; grid-template-columns:145px 115px 90px minmax(260px,1.7fr) 130px 110px 125px; gap:8px; align-items:center; }
+.assignment-head { padding:12px 14px; background:#173a4b; color:#fff; font-size:12px; font-weight:800; border-radius:12px 12px 0 0; }
+.assignment-row { padding:10px 14px; border:1px solid rgba(23,58,75,.1); border-top:0; background:#fff; }
+.assignment-row.is-leave { background:linear-gradient(90deg,#fff0ed 0%,#ffe0d8 100%); box-shadow:inset 7px 0 #f26659; }
+.assignment-row.is-special { background:#fffaf0; }
+.assignment-person strong,.assignment-person small { display:block; }
+.assignment-person small { margin-top:4px; color:var(--muted,#6b7c87); font-size:11px; }
+.assignment-row input,.assignment-row select { width:100%; min-height:34px; padding:6px 7px; border:1px solid rgba(23,58,75,.15); border-radius:8px; font:inherit; font-size:12px; color:var(--ink,#173a4b); background:#fff; }
+.task-line { display:flex; gap:6px; align-items:center; }
+.task-line input { flex:1; }
+.task-line input:last-child { max-width:78px; }
+.assignment-reference { display:grid; gap:5px; margin-top:14px; padding:14px 16px; background:#f7fbfc; border-radius:12px; color:#526974; font-size:12px; line-height:1.55; }
+.assignment-reference strong { color:#173a4b; }
+@media (max-width:900px) { .monthly-code-grid { grid-template-columns:1fr 1fr; } .assignment-toolbar { align-items:flex-start; flex-direction:column; } }
+@media (max-width:620px) { .monthly-code-grid { grid-template-columns:1fr; } .assignment-actions { width:100%; } }
+
+@media print {
+  body.print-schedule * { visibility:hidden !important; }
+  body.print-schedule #printSchedule, body.print-schedule #printSchedule * { visibility:visible !important; }
+  body.print-schedule #printSchedule { position:absolute; left:0; top:0; width:100%; padding:12mm; background:#fff; color:#111; }
+}
+#printSchedule { display:none; }
+body.print-schedule #printSchedule { display:block; }
+.print-schedule { font-family:Arial,"Tahoma",sans-serif; color:#111; }
+.print-schedule h1 { font-size:17px; margin:0 0 10px; text-align:left; }
+.print-schedule .print-meta { font-size:10px; margin-bottom:8px; }
+.print-schedule table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:9px; }
+.print-schedule th,.print-schedule td { border:1px solid #222; padding:5px 4px; vertical-align:top; word-break:break-word; }
+.print-schedule th { background:#eaf1f3; text-align:center; }
+.print-schedule tr.leave-row td { background:#ffe0d8; }
+.print-schedule .print-note { margin-top:9px; font-size:9px; line-height:1.5; }
+.print-schedule .print-footer { margin-top:8px; font-size:8px; line-height:1.45; }
+
+/* Weekly assignment controls and polished printable report */
+.week-assignment-picker { min-width:360px; }
+.week-label { display:block; color:var(--muted); font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+#assignmentWeekLabel { margin-top:4px; color:var(--ink); font-size:12px; font-weight:700; }
+.week-day-buttons { display:flex; gap:6px; margin-top:9px; flex-wrap:wrap; }
+.assignment-day-button { display:flex; flex-direction:column; gap:2px; min-width:62px; padding:7px 9px; border:1px solid rgba(57,209,189,.28); border-radius:10px; color:var(--ink); background:rgba(255,255,255,.7); font-size:10px; font-weight:700; text-align:left; }
+.assignment-day-button small { color:var(--muted); font-size:9px; font-weight:500; }
+.assignment-day-button:hover,.assignment-day-button.is-active { color:#fff; border-color:var(--teal); background:linear-gradient(135deg,#16b99f,#168fa4); box-shadow:0 8px 20px -12px #16b99f; }
+.assignment-day-button.is-active small { color:rgba(255,255,255,.8); }
+.assignment-day-button.is-holiday { border-color:#f26659; }
+
+@media print {
+  @page { size: A4 landscape; margin: 10mm; }
+  body.print-schedule #printSchedule { padding:0; }
+}
+.print-schedule { color:#173a4b; font-family:"Tahoma","Noto Sans Thai",Arial,sans-serif; }
+.print-schedule .print-cover { display:flex; justify-content:space-between; gap:20px; align-items:flex-start; padding:16px 18px; margin-bottom:12px; border-radius:16px; color:#fff; background:linear-gradient(135deg,#073b4c 0%,#0b7285 52%,#12b8a3 100%); }
+.print-schedule .print-cover h1 { margin:0; color:#fff; font-size:20px; font-weight:800; }
+.print-schedule .print-cover p { margin:5px 0 0; color:rgba(255,255,255,.78); font-size:10px; }
+.print-schedule .print-kpis { display:flex; gap:8px; }
+.print-schedule .print-kpi { min-width:92px; padding:8px 10px; border:1px solid rgba(255,255,255,.3); border-radius:10px; background:rgba(255,255,255,.13); text-align:center; }
+.print-schedule .print-kpi b,.print-schedule .print-kpi span { display:block; }
+.print-schedule .print-kpi b { font-size:15px; }
+.print-schedule .print-kpi span { margin-top:2px; font-size:8px; color:rgba(255,255,255,.8); }
+.print-schedule table { border:1.2px solid #173a4b; border-radius:10px; overflow:hidden; font-size:8.6px; }
+.print-schedule th { padding:7px 5px; color:#fff; border-color:#173a4b; background:#173a4b; }
+.print-schedule td { padding:6px 5px; border-color:#b8cbd1; }
+.print-schedule tbody tr:nth-child(even) td { background:#f4f9fa; }
+.print-schedule tr.leave-row td { color:#8e2d24; background:#ffe0d8 !important; }
+.print-schedule .status-pill { display:inline-block; padding:2px 6px; border-radius:99px; color:#087968; background:#d8f5ee; font-size:8px; font-weight:800; }
+.print-schedule .leave-row .status-pill { color:#a83f35; background:#ffd1c8; }
+.print-schedule .print-notes { display:grid; grid-template-columns:1.3fr 1fr; gap:10px; margin-top:10px; }
+.print-schedule .print-note,.print-schedule .print-footer { margin:0; padding:8px 10px; border-radius:10px; background:#f1f7f8; color:#526974; font-size:8px; line-height:1.5; }
+.print-schedule .print-footer { background:#e5f5f2; color:#126557; }
+
+/* v4 assignment controls */
+.assignment-head,.assignment-row { grid-template-columns:145px 190px 76px minmax(300px,1.7fr) 210px 180px 135px; }
+.activity-cell,.tasks-cell,.location-buttons,.code-cell { display:flex; flex-direction:column; gap:5px; }
+.activity-cell { align-items:flex-start; }
+.work-status { display:inline-block; padding:4px 8px; border-radius:999px; color:#087968; background:#d8f5ee; font-size:10px; font-weight:800; }
+.activity-buttons { display:flex; gap:4px; flex-wrap:wrap; }
+.activity-button,.location-button,.add-task-button { padding:5px 7px; border:1px solid rgba(18,184,163,.25); border-radius:7px; color:var(--ink); background:#fff; font-size:10px; font-weight:700; }
+.activity-button:hover,.activity-button.is-active,.location-button:hover,.location-button.is-active { color:#fff; border-color:#12b8a3; background:linear-gradient(135deg,#16b99f,#168fa4); }
+.assignment-row.is-leave .work-status { color:#a83f35; background:#ffd1c8; }
+.assignment-row.is-leave .activity-button.is-active { color:#fff; background:#e85d4e; border-color:#e85d4e; }
+.location-buttons { flex-direction:row; flex-wrap:wrap; align-items:flex-start; }
+.location-button { font-size:9px; }
+.task-line { display:grid; grid-template-columns:18px minmax(110px,1fr) minmax(90px,1fr); gap:4px; align-items:center; }
+.task-line select,.task-line input { min-width:0; }
+.task-number { color:var(--muted); font-size:10px; font-weight:800; }
+.add-task-button { align-self:flex-start; color:#168f80; background:#e9f8f4; }
+.code-cell select { font-size:10px; }
+.assignment-row input,.assignment-row select { font-size:10px; }
+
+@media print {
+  @page { size:A4 portrait; margin:9mm; }
+  body.print-schedule #printSchedule { width:100%; padding:0; }
+  .weekly-print .print-cover { break-after:avoid; }
+  .weekly-print .print-day { break-inside:avoid; page-break-inside:avoid; margin-top:10px; }
+  .weekly-print .print-day:not(:first-of-type) { page-break-before:always; }
+}
+.weekly-print .print-day { margin-top:12px; }
+.weekly-print .print-day-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; padding:11px 13px; border-radius:12px 12px 0 0; color:#fff; background:linear-gradient(135deg,#073b4c,#0b7285 55%,#12b8a3); }
+.weekly-print .print-day-head h2 { margin:0; color:#fff; font-size:15px; }
+.weekly-print .print-day-head p { margin-top:3px; color:rgba(255,255,255,.78); font-size:8px; }
+.weekly-print .print-day-kpis { display:flex; gap:5px; }
+.weekly-print .print-day-kpis span { min-width:48px; padding:5px; border:1px solid rgba(255,255,255,.3); border-radius:7px; background:rgba(255,255,255,.13); text-align:center; font-size:7px; }
+.weekly-print .print-day-kpis b { display:block; font-size:12px; }
+.weekly-print .print-workforce-summary { padding:7px 9px; color:#526974; border-left:1px solid #b8cbd1; border-right:1px solid #b8cbd1; background:#f1f7f8; font-size:8px; }
+.weekly-print table { border-radius:0 0 10px 10px; font-size:7.6px; }
+.weekly-print th { padding:6px 3px; font-size:7.4px; }
+.weekly-print td { padding:5px 3px; }
+.weekly-print .print-notes { margin-top:12px; }
+
+
+/* v5 unified OPD2 visual system: Navy / Teal / Sky */
+:root {
+  --opd-ink: #173a4b;
+  --opd-muted: #66808b;
+  --opd-teal: #12b8a3;
+  --opd-teal-deep: #087f78;
+  --opd-sky: #4b9de8;
+  --opd-line: rgba(23,58,75,.13);
+  --opd-surface: rgba(255,255,255,.84);
+  --opd-shadow: 0 18px 45px -28px rgba(9,67,87,.48);
+}
+
+.assignment-card {
+  border-color: rgba(18,184,163,.22);
+  background: linear-gradient(145deg, rgba(255,255,255,.96), rgba(234,249,249,.88));
+  box-shadow: 0 20px 50px -32px rgba(18,128,143,.55), inset 0 1px rgba(255,255,255,.95);
+}
+.assignment-card .card-header {
+  background: linear-gradient(135deg, rgba(255,255,255,.76), rgba(226,248,246,.62));
+  border-bottom-color: rgba(18,184,163,.16);
+}
+.assignment-card .title-row h2,
+.assignment-card .section-heading h2,
+.assignment-card label,
+.assignment-card .week-label,
+.assignment-card #assignmentWeekLabel { color: var(--opd-ink); }
+.assignment-card .card-header p,
+.assignment-card .assignment-toolbar,
+.assignment-card .assignment-reference { color: var(--opd-muted); }
+
+.week-assignment-picker {
+  padding: 10px 12px;
+  border: 1px solid rgba(18,184,163,.18);
+  border-radius: 15px;
+  background: rgba(255,255,255,.7);
+  box-shadow: inset 0 1px rgba(255,255,255,.9), 0 8px 25px -20px rgba(23,58,75,.55);
+}
+.week-day-buttons { gap: 7px; }
+.assignment-day-button {
+  min-width: 66px;
+  border-color: rgba(75,157,232,.22);
+  color: var(--opd-ink);
+  background: linear-gradient(180deg, #fff, #edf8fb);
+  box-shadow: 0 7px 15px -13px rgba(23,58,75,.7);
+  transition: transform .18s cubic-bezier(.23,1,.32,1), box-shadow .18s, background .18s;
+}
+.assignment-day-button:hover { transform: translateY(-2px); box-shadow: 0 11px 22px -13px rgba(18,184,163,.8); }
+.assignment-day-button.is-active { background: linear-gradient(135deg, var(--opd-teal-deep), var(--opd-sky)); box-shadow: 0 12px 24px -13px rgba(18,128,143,.95); }
+.assignment-day-button.is-holiday { color: #a83f35; border-color: rgba(242,102,89,.5); background: #fff1ee; }
+.assignment-day-button.is-holiday.is-active { color: #fff; background: linear-gradient(135deg,#d94d3e,#f26659); }
+
+.monthly-code-grid {
+  padding: 17px;
+  border-color: rgba(18,184,163,.18);
+  background: linear-gradient(135deg, rgba(18,184,163,.08), rgba(75,157,232,.06));
+  box-shadow: inset 0 1px rgba(255,255,255,.8);
+}
+.mini-field { color: var(--opd-muted); letter-spacing: .01em; }
+.mini-field input,
+.mini-field select {
+  color: var(--opd-ink);
+  border-color: rgba(75,157,232,.22);
+  background: rgba(255,255,255,.9);
+  box-shadow: inset 0 1px rgba(255,255,255,.9), 0 5px 14px -12px rgba(23,58,75,.8);
+  transition: border-color .18s, box-shadow .18s, transform .18s;
+}
+.mini-field input:hover,.mini-field select:hover { border-color: rgba(18,184,163,.55); }
+.mini-field input:focus,.mini-field select:focus,
+.assignment-row input:focus,.assignment-row select:focus {
+  border-color: var(--opd-teal);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(18,184,163,.15), 0 7px 16px -13px rgba(18,128,143,.85);
+}
+
+.assignment-toolbar {
+  margin: 3px 0 14px;
+  padding: 9px 12px;
+  border: 1px solid rgba(75,157,232,.14);
+  border-radius: 11px;
+  background: rgba(255,255,255,.56);
+}
+.assignment-head {
+  color: #fff;
+  border: 1px solid rgba(18,184,163,.25);
+  background: linear-gradient(135deg, #173a4b 0%, #0b7285 60%, #168f80 100%);
+  box-shadow: 0 10px 25px -18px rgba(23,58,75,.8), inset 0 1px rgba(255,255,255,.2);
+  letter-spacing: .02em;
+}
+.assignment-row {
+  border-color: rgba(75,157,232,.13);
+  background: rgba(255,255,255,.78);
+  box-shadow: inset 0 1px rgba(255,255,255,.72);
+  transition: transform .18s cubic-bezier(.23,1,.32,1), box-shadow .18s, background .18s;
+}
+.assignment-row:hover {
+  position: relative;
+  z-index: 1;
+  transform: translateY(-1px);
+  background: #fff;
+  box-shadow: 0 12px 28px -22px rgba(23,58,75,.65), inset 0 1px rgba(255,255,255,.9);
+}
+.assignment-row.is-special { background: linear-gradient(90deg, #fffdf5, #fff8e8); }
+.assignment-row.is-leave { background: linear-gradient(90deg, #fff1ee, #ffe3dc); }
+.assignment-person strong { color: var(--opd-ink); font-size: 12px; }
+.assignment-person small { color: var(--opd-muted); }
+.assignment-row input,
+.assignment-row select {
+  color: var(--opd-ink);
+  border-color: rgba(23,58,75,.14);
+  background: rgba(255,255,255,.92);
+  box-shadow: inset 0 1px rgba(255,255,255,.9);
+  transition: border-color .18s, box-shadow .18s, background .18s;
+}
+.activity-button,.location-button,.add-task-button {
+  color: var(--opd-ink);
+  border-color: rgba(18,184,163,.22);
+  background: linear-gradient(180deg,#fff,#eef9f8);
+  box-shadow: 0 5px 12px -11px rgba(23,58,75,.9);
+  transition: transform .16s cubic-bezier(.23,1,.32,1), box-shadow .16s, color .16s, background .16s;
+}
+.activity-button:hover,.location-button:hover,.add-task-button:hover { transform: translateY(-1px); box-shadow: 0 8px 16px -12px rgba(18,128,143,.9); }
+.activity-button.is-active,.location-button.is-active {
+  color: #fff;
+  background: linear-gradient(135deg, var(--opd-teal-deep), var(--opd-sky));
+  border-color: transparent;
+  box-shadow: 0 8px 18px -12px rgba(18,128,143,.95), inset 0 1px rgba(255,255,255,.3);
+}
+.assignment-row.is-leave .activity-button.is-active { background: linear-gradient(135deg,#c94f43,#f26659); box-shadow: 0 8px 18px -12px rgba(201,79,67,.9); }
+.add-task-button { color: var(--opd-teal-deep); background: linear-gradient(180deg,#f2fffc,#dff7f1); }
+.task-line { padding: 3px; border-radius: 8px; background: rgba(75,157,232,.05); }
+.task-number { color: var(--opd-sky); }
+.code-cell select { border-left: 3px solid var(--opd-teal); }
+.code-cell select:last-child { border-left-color: var(--opd-sky); }
+.work-status { box-shadow: inset 0 1px rgba(255,255,255,.8), 0 5px 12px -10px rgba(18,128,143,.8); }
+.assignment-reference {
+  border: 1px solid rgba(75,157,232,.14);
+  background: linear-gradient(135deg, rgba(239,250,251,.9), rgba(235,247,255,.82));
+  box-shadow: inset 0 1px rgba(255,255,255,.9);
+}
+.assignment-reference strong { color: var(--opd-ink); }
+
+/* Keep all primary interactions in the same visual language. */
+.primary-button,.secondary-button,.inline-button,.holiday-button,.text-button,.reset-link { transition: transform .16s cubic-bezier(.23,1,.32,1), box-shadow .16s, background .16s, color .16s; }
+.primary-button:active,.secondary-button:active,.activity-button:active,.location-button:active,.assignment-day-button:active { transform: scale(.97); }
+.primary-button { box-shadow: 0 12px 25px -16px rgba(18,128,143,.9), inset 0 1px rgba(255,255,255,.22); }
+.secondary-button { box-shadow: 0 9px 20px -17px rgba(23,58,75,.9); }
+
+@media (max-width:900px) {
+  .assignment-actions { align-items:stretch; }
+  .week-assignment-picker { min-width:0; width:100%; }
+  .assignment-actions > .primary-button { width:100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .assignment-day-button,.assignment-row,.activity-button,.location-button,.add-task-button,.primary-button,.secondary-button { transition:none; }
+}

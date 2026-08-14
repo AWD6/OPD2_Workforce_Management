@@ -31,7 +31,12 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16" /></svg>
             ปฏิทินคลินิก
           </button>
-          <button class="nav-item" data-scroll="records">
+                      <button class="nav-item" data-scroll="assignments">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v14H5z"/><path d="M8 9h8M8 13h6M8 17h4"/></svg>
+              ตารางจ่ายงาน
+            </button>
+            <button class="nav-item" data-scroll="records">
+
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12a2 2 0 0 1 2 2v14H4V6a2 2 0 0 1 2-2Z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
             บันทึกข้อมูล
           </button>
@@ -163,6 +168,32 @@
               </div>
             </div>
           </section>
+
+          <section class="data-card assignment-card" id="assignments">
+            <div class="card-header">
+              <div>
+                <div class="title-row"><h2>ตารางจ่ายงานรายบุคคล</h2><span class="editable-pill">เชื่อมโยงข้อมูล</span></div>
+                <p>จ่ายงานรายบุคคลก่อนการจัดสรรกำลังคน ระบบจะเชื่อม VAC/กิจกรรมกลับไปคำนวณ Workforce ให้อัตโนมัติ และสร้าง PDF ได้ทั้งสัปดาห์</p>
+              </div>
+              <div class="assignment-actions"><div class="week-assignment-picker"><span class="week-label">จ่ายงานรายสัปดาห์</span><div id="assignmentWeekLabel"></div><div class="week-day-buttons" id="assignmentDayButtons"></div></div><button class="primary-button compact" id="generatePdfButton">สร้าง PDF รายสัปดาห์</button></div>
+            </div>
+            <div class="monthly-code-grid">
+              <label class="mini-field">Code อัคคีภัยประจำเดือน<input id="monthlyFireCode" type="text" placeholder="เช่น C2" /></label>
+              <label class="mini-field">Code CPR ประจำเดือน<input id="monthlyCprCode" type="text" placeholder="เช่น P1" /></label>
+              <label class="mini-field">ยอดคาดการณ์ผู้ป่วยวันนี้<input id="dailyForecast" type="number" min="0" /></label>
+              <label class="mini-field wide-field">หมายเหตุส่วนกลาง<input id="scheduleNote" type="text" placeholder="หมายเหตุเพิ่มเติมสำหรับใบจ่ายงาน" /></label>
+            </div>
+            <div class="assignment-toolbar"><span>สถานะลา/ประชุม/อบรม/Float/เก็บชั่วโมงจะถูกส่งกลับไปคำนวณกำลังคนอัตโนมัติ</span><button class="secondary-button compact" id="applyDefaultAssignments">ใช้ค่าเริ่มต้นหน้าที่ทุกคน</button></div>
+            <div class="table-scroll">
+              <div class="assignment-table">
+                <div class="assignment-head"><span>ชื่อ / ตำแหน่ง</span><span>สถานะการปฏิบัติงาน</span><span>เวลาพัก</span><span>หน้าที่ / เวลา</span><span>ปภ.1/2</span><span>Code อัคคีภัย / CPR</span><span>เวลามา / เซ็นชื่อ</span></div>
+                <div id="assignmentRows"></div>
+              </div>
+            </div>
+            <div class="assignment-reference"><strong>คำอธิบาย Code และสถานที่</strong><span>C1 สื่อสาร/ประสานงาน · C2 เคลื่อนย้าย · C3 ดับเพลิง</span><span>P1 ควบคุมสั่งการ · P2 AED/Defibrillator · P3 สารน้ำ/ยา/เจาะเลือด · P4 บันทึก CPR · P5 ทางเดินหายใจ · P6 chest compression</span><span>A ตามแพทย์/ประสานงาน: OPD 110 โทร 34605 · OPD 10 โทร 35750–35760 · RR team โทร 38799 · ER โทร 36333 · เปล/เคลื่อนย้าย โทร 35692–35693</span></div>
+          </section>
+
+
 
           <section class="data-card" id="allocation">
             <div class="card-header">
