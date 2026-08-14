@@ -1178,3 +1178,50 @@ body.print-schedule #printSchedule { display:block; }
 .print-code-legend b { color:#087f78; }
 .download-pdf .print-code-legend { margin-top: 7px; padding: 7px 9px; font-size: 8.4px; line-height: 1.35; }
 .download-pdf .print-code-legend strong { font-size: 9.4px; }
+
+/* v8 assignment controls: prevent activity buttons from touching the break column */
+.assignment-card .activity-cell,
+.assignment-card .tasks-cell,
+.assignment-card .assignment-row > * { min-width: 0; }
+.assignment-card .activity-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  gap: 4px;
+  flex-wrap: unset;
+}
+.assignment-card .activity-button {
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.2;
+  text-align: center;
+}
+.assignment-card .activity-cell > select,
+.assignment-card .activity-cell > small { width: 100%; min-width: 0; }
+.assignment-card .task-line { min-width: 0; }
+.assignment-card .task-line select,
+.assignment-card .task-line input { min-width: 0; width: 100%; }
+
+@media (min-width: 901px) and (max-width: 1400px) {
+  .assignment-card .activity-buttons { gap: 3px; }
+  .assignment-card .activity-button { padding: 4px 3px; font-size: 8px; }
+  .assignment-card .task-line { grid-template-columns: 12px minmax(62px, 1fr) minmax(54px, .8fr); }
+  .assignment-card .task-line.has-custom-task { grid-template-columns: 12px minmax(60px, .85fr) minmax(74px, 1.15fr) minmax(62px, .85fr); }
+  .assignment-card .task-line.has-custom-task input { font-size: 8px; padding-left: 3px; padding-right: 3px; }
+}
+
+/* v8 staffing summary: exactly Nurse / PN / HP */
+.staffing-columns { grid-template-columns: 145px repeat(3, minmax(145px, 1fr)); gap: 8px; }
+.allocation-role-cell.role-hn { display: none; }
+@media (max-width: 900px) {
+  .staffing-columns { min-width: 650px; }
+}
+
+.task-line.has-custom-task {
+  grid-template-columns: 18px minmax(90px, .9fr) minmax(120px, 1.2fr) minmax(90px, .9fr);
+}
+.task-line.has-custom-task input { min-width: 0; width: 100%; }
+@media (max-width: 900px) {
+  .task-line.has-custom-task { grid-template-columns: 18px minmax(90px, .8fr) minmax(130px, 1.2fr) minmax(90px, .8fr); }
+}

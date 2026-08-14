@@ -47,14 +47,14 @@ function loadAssignments(dateText) {
   if (!saved?.length && (day === 3 || day === 4)) result.forEach((person) => { person.time = person.time.replace(/^07:50/, "07:45"); person.activities = person.activities.map((activity) => ({ ...activity, time: activity.time.replace(/^07:50/, "07:45") })); });
   return result;
 }
-function roleKeyForAssignment(person) { return person.role === "HN" ? "hn" : person.role === "PN" ? "pn" : person.role === "HP" ? "hp" : "nurse"; }
-function roleLabel(role) { return { nurse: "Nurse/RN", pn: "PN", hn: "HN", hp: "HP" }[role] || role.toUpperCase(); }
-function roleSuffix(role) { return role === "nurse" ? "Nurse" : role === "pn" ? "Pn" : role === "hn" ? "Hn" : "Hp"; }
+function roleKeyForAssignment(person) { return person.role === "PN" ? "pn" : person.role === "HP" ? "hp" : "nurse"; }
+function roleLabel(role) { return { nurse: "Nurse", pn: "PN", hp: "HP" }[role] || role.toUpperCase(); }
+function roleSuffix(role) { return role === "nurse" ? "Nurse" : role === "pn" ? "Pn" : "Hp"; }
 function syncAssignmentsToWorkforce() {
   const plan = currentPlans.find((item) => dateKey(new Date(item.date)) === assignmentDate);
   if (!plan || plan.holiday) return;
-  const allocation = { leaveNurse: 0, leavePn: 0, leaveHn: 0, leaveHp: 0, trainingHours: 0, floatHours: 0, collectHours: 0 };
-  const roleActivity = { nurse: { training: 0, float: 0, collect: 0 }, pn: { training: 0, float: 0, collect: 0 }, hn: { training: 0, float: 0, collect: 0 }, hp: { training: 0, float: 0, collect: 0 } };
+  const allocation = { leaveNurse: 0, leavePn: 0, leaveHp: 0, trainingHours: 0, floatHours: 0, collectHours: 0 };
+  const roleActivity = { nurse: { training: 0, float: 0, collect: 0 }, pn: { training: 0, float: 0, collect: 0 }, hp: { training: 0, float: 0, collect: 0 } };
   currentAssignments.forEach((person) => {
     const role = roleKeyForAssignment(person);
     const activity = person.activity || "ปฏิบัติงาน";
@@ -155,11 +155,10 @@ function makeDefaultPlans(monday) {
     date: addDays(monday, index).toISOString(),
     holiday: false,
     ...defaults[index],
-    allocation: { leaveNurse: 0, leavePn: 0, leaveHn: 0, leaveHp: 0, trainingHours: 0, floatHours: 0, collectHours: 0 },
+    allocation: { leaveNurse: 0, leavePn: 0, leaveHp: 0, trainingHours: 0, floatHours: 0, collectHours: 0 },
     roleActivity: {
       nurse: { training: 0, float: 0, collect: 0 },
       pn: { training: 0, float: 0, collect: 0 },
-      hn: { training: 0, float: 0, collect: 0 },
       hp: { training: 0, float: 0, collect: 0 }
     }
   }));
@@ -173,18 +172,16 @@ function normalizePlan(plan, index, monday) {
     ...plan,
     date: plan.date || addDays(monday, index).toISOString(),
     allocation: {
-      leaveNurse: clampNumber(legacy.leaveNurse),
+      leaveNurse: clampNumber(legacy.leaveNurse) + clampNumber(legacy.leaveHn),
       leavePn: clampNumber(legacy.leavePn),
-      leaveHn: clampNumber(legacy.leaveHn),
       leaveHp: clampNumber(legacy.leaveHp),
       trainingHours: clampNumber(legacy.trainingHours ?? legacy.trainingPeople),
       floatHours: clampNumber(legacy.floatHours),
       collectHours: clampNumber(legacy.collectHours ?? legacy.collectPeople ?? legacy.floatPeople)
     },
     roleActivity: {
-      nurse: { training: clampNumber(roleActivity.nurse?.training), float: clampNumber(roleActivity.nurse?.float), collect: clampNumber(roleActivity.nurse?.collect) },
+      nurse: { training: clampNumber(roleActivity.nurse?.training) + clampNumber(roleActivity.hn?.training), float: clampNumber(roleActivity.nurse?.float) + clampNumber(roleActivity.hn?.float), collect: clampNumber(roleActivity.nurse?.collect) + clampNumber(roleActivity.hn?.collect) },
       pn: { training: clampNumber(roleActivity.pn?.training), float: clampNumber(roleActivity.pn?.float), collect: clampNumber(roleActivity.pn?.collect) },
-      hn: { training: clampNumber(roleActivity.hn?.training), float: clampNumber(roleActivity.hn?.float), collect: clampNumber(roleActivity.hn?.collect) },
       hp: { training: clampNumber(roleActivity.hp?.training), float: clampNumber(roleActivity.hp?.float), collect: clampNumber(roleActivity.hp?.collect) }
     }
   };
@@ -217,7 +214,7 @@ function demand(plan) {
 
 function activityTotals(plan) {
   return ["training", "float", "collect"].reduce((totals, activity) => {
-    totals[activity] = ["nurse", "pn", "hn", "hp"].reduce((sum, role) => sum + clampNumber(plan.roleActivity?.[role]?.[activity]), 0);
+    totals[activity] = ["nurse", "pn", "hp"].reduce((sum, role) => sum + clampNumber(plan.roleActivity?.[role]?.[activity]), 0);
     return totals;
   }, { training: 0, float: 0, collect: 0 });
 }
@@ -234,7 +231,7 @@ function calculateProduct(plan) {
   if (plan.holiday) return null;
   const a = plan.allocation;
   const baseCapacityHours = totalStaff() * 7;
-  const leaveHours = (a.leaveNurse + a.leavePn + a.leaveHn + a.leaveHp) * 7;
+  const leaveHours = (a.leaveNurse + a.leavePn + a.leaveHp) * 7;
   const removedHours = leaveHours + a.trainingHours + a.floatHours + a.collectHours;
   return Math.round((demand(plan) / Math.max(baseCapacityHours - removedHours, 1)) * 100);
 }
@@ -316,7 +313,7 @@ function renderStaffingRows() {
   const container = document.getElementById("staffingRows");
   container.innerHTML = currentPlans.map((plan, index) => `<div class="table-row staffing-row staffing-columns ${plan.holiday ? "is-holiday" : ""}">
     <div class="day-cell"><span class="day-initial">${DAY_SHORT[index]}</span><span><b class="day-name">${plan.label}</b><small class="day-date">${toThaiDate(new Date(plan.date))}</small></span></div>
-    ${["nurse", "pn", "hn", "hp"].map((role) => staffingRoleCell(role, plan)).join("")}
+    ${["nurse", "pn", "hp"].map((role) => staffingRoleCell(role, plan)).join("")}
   </div>`).join("");
 }
 
@@ -337,7 +334,7 @@ function renderAssignments() {
     <div class="assignment-person"><strong>${escapeHtml(person.name)}</strong><small>${escapeHtml(person.role)}</small></div>
     <div class="activity-cell"><span class="work-status">ปฏิบัติงาน</span><div class="activity-buttons">${ACTIVITY_OPTIONS.slice(1).map((option) => `<button type="button" class="activity-button ${person.activity === option ? "is-active" : ""}" data-activity="${index}" data-value="${escapeHtml(option)}">${escapeHtml(option.split(" = ")[0])}</button>`).join("")}</div>${person.activity === "ประชุม/อบรม" ? assignmentSelect(`activity-value-${index}`, TRAINING_HOURS, person.activityValue || "1") + `<small>ชม.</small>` : person.activity === "Float ออก" ? assignmentSelect(`activity-value-${index}`, FLOAT_PERIODS, person.activityValue || FLOAT_PERIODS[0]) : ""}</div>
     <div>${assignmentSelect(`break-${index}`, BREAK_OPTIONS, person.break)}</div>
-    <div class="tasks-cell">${person.activities.map((activity, taskIndex) => `<div class="task-line"><span class="task-number">${taskIndex + 1}.</span>${assignmentSelect(`task-${index}-${taskIndex}`, TASK_OPTIONS, TASK_OPTIONS.includes(activity.task) ? activity.task : "อื่นๆ")}${!TASK_OPTIONS.includes(activity.task) || activity.task === "อื่นๆ" ? `<input id="custom-task-${index}-${taskIndex}" value="${escapeHtml(TASK_OPTIONS.includes(activity.task) ? "" : activity.task)}" placeholder="กรอกหน้าที่อื่นๆ" />` : ""}<input id="time-${index}-${taskIndex}" value="${escapeHtml(activity.time)}" aria-label="เวลาหน้าที่" /></div>`).join("")}<button type="button" class="add-task-button" data-add-task="${index}">+ เพิ่มหน้าที่</button></div>
+    <div class="tasks-cell">${person.activities.map((activity, taskIndex) => { const hasCustomTask = !TASK_OPTIONS.includes(activity.task) || activity.task === "อื่นๆ"; return `<div class="task-line ${hasCustomTask ? "has-custom-task" : ""}"><span class="task-number">${taskIndex + 1}.</span>${assignmentSelect(`task-${index}-${taskIndex}`, TASK_OPTIONS, TASK_OPTIONS.includes(activity.task) ? activity.task : "อื่นๆ")}${hasCustomTask ? `<input id="custom-task-${index}-${taskIndex}" value="${escapeHtml(TASK_OPTIONS.includes(activity.task) ? "" : activity.task)}" placeholder="กรอกหน้าที่อื่นๆ" />` : ""}<input id="time-${index}-${taskIndex}" value="${escapeHtml(activity.time)}" aria-label="เวลาหน้าที่" placeholder="เวลา" /></div>`; }).join("")}<button type="button" class="add-task-button" data-add-task="${index}">+ เพิ่มหน้าที่</button></div>
     <div class="location-buttons">${LOCATION_OPTIONS.map((location) => `<button type="button" class="location-button ${person.location === location ? "is-active" : ""}" data-location="${index}" data-value="${escapeHtml(location)}">${escapeHtml(location)}</button>`).join("")}</div>
     <div class="code-cell">${assignmentSelect(`fire-${index}`, FIRE_CODE_OPTIONS, person.fireLabel || FIRE_CODE_OPTIONS.find((option) => option.startsWith(person.fire)) || FIRE_CODE_OPTIONS[0])}${assignmentSelect(`cpr-${index}`, CPR_CODE_OPTIONS, person.cprLabel || CPR_CODE_OPTIONS.find((option) => option.startsWith(person.cpr)) || CPR_CODE_OPTIONS[0])}</div>
     <div><input id="arrival-${index}" value="${escapeHtml(person.arrival)}" placeholder="เวลา / เซ็นชื่อ" /><input id="note-${index}" value="${escapeHtml(person.note)}" placeholder="หมายเหตุ" /></div>
@@ -365,7 +362,7 @@ function weeklyDayHtml(plan, assignments) {
   const rows = assignments.map((person) => { const isLeave = person.activity === "VAC = ลา"; return `<tr class="${isLeave ? "leave-row" : ""}"><td>${isLeave ? "VACATION" : `<b>${escapeHtml(person.name)}</b><br><small>${escapeHtml(person.role)}</small>`}</td><td><span class="status-pill">${escapeHtml(formatActivity(person))}</span><br>พัก ${escapeHtml(person.break)} น.</td><td>${isLeave ? "ตัดออกจากกำลังคน" : taskText(person)}</td><td>${isLeave ? "—" : escapeHtml(person.location || "-")}</td><td>${escapeHtml(person.fireLabel || person.fire || "—")}<br>${escapeHtml(person.cprLabel || person.cpr || "—")}</td><td>${escapeHtml(person.arrival || "")}${person.note ? `<br>${escapeHtml(person.note)}` : ""}</td></tr>`; }).join("");
   const product = calculateProduct(plan);
   const a = plan.allocation;
-  const roleSummary = ["nurse", "pn", "hn", "hp"].map((role) => { const values = plan.roleActivity?.[role] || { training: 0, float: 0, collect: 0 }; return `<span><b>${roleLabel(role)}</b> ลา ${a[`leave${roleSuffix(role)}`] || 0} · อ/ป ${values.training} · Float ${values.float} · เก็บ ${values.collect} ชม.</span>`; }).join("");
+  const roleSummary = ["nurse", "pn", "hp"].map((role) => { const values = plan.roleActivity?.[role] || { training: 0, float: 0, collect: 0 }; return `<span><b>${roleLabel(role)}</b> ลา ${a[`leave${roleSuffix(role)}`] || 0} · อ/ป ${values.training} · Float ${values.float} · เก็บ ${values.collect} ชม.</span>`; }).join("");
   return `<section class="print-day"><div class="print-day-head"><div><h2>${plan.label} · ${toThaiDate(new Date(plan.date))}</h2><p>ตารางจ่ายงานบุคลากรประจำวัน · ข้อมูลจาก Workforce Management</p></div><div class="print-day-kpis"><span><b>${demand(plan)}</b>ผู้ป่วยคาดการณ์</span><span><b>${product === null ? "—" : `${product}%`}</b>Product</span><span><b>${leaveCount}</b>ลา</span><span><b>${specialCount}</b>กิจกรรม</span></div></div><div class="print-workforce-summary">${roleSummary}</div><table><thead><tr><th>ชื่อ / ตำแหน่ง</th><th>กิจกรรม / พัก</th><th>หน้าที่ / เวลา</th><th>ปภ.1/2</th><th>Code อัคคีภัย / CPR</th><th>เวลามา / เซ็นชื่อ / หมายเหตุ</th></tr></thead><tbody>${rows}</tbody></table>${printCodeLegendHtml()}</section>`;
 }
 function buildWeeklyPrintSchedule() {
@@ -439,7 +436,7 @@ function renderMetrics() {
   document.getElementById("averageProduct").textContent = average === null ? "—" : `${average}%`;
   document.getElementById("averageDetail").textContent = average === null ? "กดคำนวณเพื่อดูภาพรวม" : average > 115 ? "มีวันที่ต้องตรวจสอบ" : "แผนอยู่ในเกณฑ์ปลอดภัย";
   const breakdown = document.getElementById("staffBreakdown");
-  breakdown.innerHTML = ["nurse", "pn", "hn", "hp"].map((role) => {
+  breakdown.innerHTML = ["nurse", "pn", "hp"].map((role) => {
     const label = roleLabel(role);
     const leave = currentPlans.reduce((sum, plan) => sum + (plan.allocation[`leave${roleSuffix(role)}`] || 0), 0);
     const values = currentPlans.reduce((totals, plan) => {
@@ -487,7 +484,7 @@ function recordDetailsHtml(record) {
   const recordStaff = record.staff || { nurse: staff.nurse, pn: staff.pn, hp: staff.hp };
   return `<div class="record-detail-table"><table><thead><tr><th>วัน / วันที่</th><th>ผู้รับบริการ</th><th>Product</th><th>บุคลากรประจำ</th><th>ลา Nurse / PN / HP</th><th>อบรม/ประชุม</th><th>Float ออก</th><th>เก็บชั่วโมง</th><th>กิจกรรมแยกตำแหน่ง</th></tr></thead><tbody>${record.plans.map((plan) => {
     const a = plan.allocation;
-    const roleText = ["nurse", "pn", "hn", "hp"].map((role) => {
+    const roleText = ["nurse", "pn", "hp"].map((role) => {
       const label = roleLabel(role);
       const values = plan.roleActivity?.[role] || { training: 0, float: 0, collect: 0 };
       return `${label}: อ/ป ${values.training} · Float ${values.float} · เก็บ ${values.collect} ชม.`;
@@ -500,7 +497,7 @@ function saveRecord() {
   const active = currentPlans.filter((plan) => !plan.holiday);
   const products = active.map(calculateProduct).filter((value) => value !== null);
   const average = products.length ? Math.round(products.reduce((sum, value) => sum + value, 0) / products.length) : null;
-  const leave = currentPlans.reduce((sum, plan) => sum + plan.allocation.leaveNurse + plan.allocation.leavePn + plan.allocation.leaveHn + plan.allocation.leaveHp, 0);
+  const leave = currentPlans.reduce((sum, plan) => sum + plan.allocation.leaveNurse + plan.allocation.leavePn + plan.allocation.leaveHp, 0);
   const trainingHours = currentPlans.reduce((sum, plan) => sum + syncActivityTotals(plan).training, 0);
   const floatHours = currentPlans.reduce((sum, plan) => sum + syncActivityTotals(plan).float, 0);
   const collectHours = currentPlans.reduce((sum, plan) => sum + syncActivityTotals(plan).collect, 0);
