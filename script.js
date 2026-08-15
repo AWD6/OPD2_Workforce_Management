@@ -561,6 +561,21 @@ function toggleStatusActivity(person, type) {
   normalizeStatusActivities(person);
   if (hasStatusActivity(person, "เก็บชั่วโมง")) person.break = "12.00";
 }
+let assignmentTemplateSyncFrame = 0;
+function queueAssignmentTemplateSync() {
+  if (assignmentTemplateSyncFrame) cancelAnimationFrame(assignmentTemplateSyncFrame);
+  assignmentTemplateSyncFrame = requestAnimationFrame(() => {
+    assignmentTemplateSyncFrame = 0;
+    syncMondayTaskDefaults();
+    currentAssignments = loadAssignments(assignmentDate);
+    refreshAssignmentView();
+  });
+}
+function refreshAssignmentView() {
+  renderAssignments();
+  renderStaffingRows();
+  renderMetrics();
+}
 function renderAssignments() {
   const dayButtons = document.getElementById("assignmentDayButtons");
   if (!dayButtons) return;
@@ -583,18 +598,18 @@ function renderAssignments() {
     <div><input id="arrival-${index}" value="${escapeHtml(person.arrival)}" placeholder="เวลา / เซ็นชื่อ" /><input id="note-${index}" value="${escapeHtml(person.note)}" placeholder="หมายเหตุ" /></div>
   </div>`).join("");
   currentAssignments.forEach((person, index) => {
-    document.querySelectorAll(`[data-activity="${index}"]`).forEach((button) => button.addEventListener("click", () => { toggleStatusActivity(person, button.dataset.value); syncAssignmentsToWorkforce(); saveAssignments(); syncMondayTaskDefaults(); render(); }));
-    ["training", "float"].forEach((slug) => document.getElementById(`activity-value-${index}-${slug}`)?.addEventListener("change", (event) => { const type = slug === "training" ? "ประชุม/อบรม" : "Float ออก"; const entry = statusActivityOf(person, type); if (entry) entry.value = event.target.value; normalizeStatusActivities(person); syncAssignmentsToWorkforce(); saveAssignments(); syncMondayTaskDefaults(); render(); }));
-    document.getElementById(`break-${index}`)?.addEventListener("change", (event) => { person.break = hasStatusActivity(person, "เก็บชั่วโมง") ? "12.00" : event.target.value; person.breakLocked = true; syncMondayTaskDefaults(); syncAssignmentsToWorkforce(); saveAssignments(); render(); });
-    document.querySelectorAll(`[data-location="${index}"]`).forEach((button) => button.addEventListener("click", () => { person.location = button.dataset.value; person.locationLocked = true; saveAssignments(); syncMondayTaskDefaults(); renderAssignments(); }));
-    document.querySelector(`[data-add-task="${index}"]`)?.addEventListener("click", () => { person.activities.push({ task: "อื่นๆ", time: "", timeLocked: true }); person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); syncMondayTaskDefaults(); renderAssignments(); });
-    document.querySelectorAll(`[data-remove-task="${index}"]`).forEach((button) => button.addEventListener("click", () => { const taskIndex = Number(button.dataset.taskIndex); if (taskIndex <= 0 || taskIndex >= person.activities.length) return; person.activities.splice(taskIndex, 1); person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); syncMondayTaskDefaults(); renderAssignments(); }));
+    document.querySelectorAll(`[data-activity="${index}"]`).forEach((button) => button.addEventListener("click", () => { toggleStatusActivity(person, button.dataset.value); syncAssignmentsToWorkforce(); saveAssignments(); refreshAssignmentView(); queueAssignmentTemplateSync(); }));
+    ["training", "float"].forEach((slug) => document.getElementById(`activity-value-${index}-${slug}`)?.addEventListener("change", (event) => { const type = slug === "training" ? "ประชุม/อบรม" : "Float ออก"; const entry = statusActivityOf(person, type); if (entry) entry.value = event.target.value; normalizeStatusActivities(person); syncAssignmentsToWorkforce(); saveAssignments(); refreshAssignmentView(); queueAssignmentTemplateSync(); }));
+    document.getElementById(`break-${index}`)?.addEventListener("change", (event) => { person.break = hasStatusActivity(person, "เก็บชั่วโมง") ? "12.00" : event.target.value; person.breakLocked = true; syncAssignmentsToWorkforce(); saveAssignments(); refreshAssignmentView(); queueAssignmentTemplateSync(); });
+    document.querySelectorAll(`[data-location="${index}"]`).forEach((button) => button.addEventListener("click", () => { person.location = button.dataset.value; person.locationLocked = true; saveAssignments(); refreshAssignmentView(); queueAssignmentTemplateSync(); }));
+    document.querySelector(`[data-add-task="${index}"]`)?.addEventListener("click", () => { person.activities.push({ task: "อื่นๆ", time: "", timeLocked: true }); person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); refreshAssignmentView(); queueAssignmentTemplateSync(); });
+    document.querySelectorAll(`[data-remove-task="${index}"]`).forEach((button) => button.addEventListener("click", () => { const taskIndex = Number(button.dataset.taskIndex); if (taskIndex <= 0 || taskIndex >= person.activities.length) return; person.activities.splice(taskIndex, 1); person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); refreshAssignmentView(); queueAssignmentTemplateSync(); }));
     person.activities.forEach((activity, taskIndex) => {
-      document.getElementById(`task-${index}-${taskIndex}`)?.addEventListener("change", (event) => { activity.task = event.target.value === "อื่นๆ" ? "อื่นๆ" : event.target.value; person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); syncMondayTaskDefaults(); renderAssignments(); });
-      document.getElementById(`custom-task-${index}-${taskIndex}`)?.addEventListener("change", (event) => { activity.task = event.target.value; person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); syncMondayTaskDefaults(); renderAssignments(); });
-      document.getElementById(`time-${index}-${taskIndex}`)?.addEventListener("change", (event) => { activity.time = event.target.value; activity.timeLocked = true; person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); syncMondayTaskDefaults(); });
+      document.getElementById(`task-${index}-${taskIndex}`)?.addEventListener("change", (event) => { activity.task = event.target.value === "อื่นๆ" ? "อื่นๆ" : event.target.value; person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); refreshAssignmentView(); queueAssignmentTemplateSync(); });
+      document.getElementById(`custom-task-${index}-${taskIndex}`)?.addEventListener("change", (event) => { activity.task = event.target.value; person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); refreshAssignmentView(); queueAssignmentTemplateSync(); });
+      document.getElementById(`time-${index}-${taskIndex}`)?.addEventListener("change", (event) => { activity.time = event.target.value; activity.timeLocked = true; person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); queueAssignmentTemplateSync(); });
     });
-    document.querySelectorAll(`[data-code-toggle="${index}"]`).forEach((button) => button.addEventListener("click", () => { const field = button.dataset.codeType; const key = `${field}Codes`; const options = field === "fire" ? FIRE_CODE_OPTIONS : CPR_CODE_OPTIONS; const values = Array.isArray(person[key]) ? [...person[key]] : normalizeCodeValues(person[`${field}Label`] || person[field], options); const value = button.dataset.codeValue; const nextValues = values.includes(value) ? values.filter((item) => item !== value) : [...values, value]; person[key] = nextValues; if (field === "fire") person.fireLocked = true; if (field === "cpr") person.cprLocked = true; syncPersonCodeState(person, field, options); saveAssignments(); syncMondayTaskDefaults(); renderAssignments(); }));
+    document.querySelectorAll(`[data-code-toggle="${index}"]`).forEach((button) => button.addEventListener("click", () => { const field = button.dataset.codeType; const key = `${field}Codes`; const options = field === "fire" ? FIRE_CODE_OPTIONS : CPR_CODE_OPTIONS; const values = Array.isArray(person[key]) ? [...person[key]] : normalizeCodeValues(person[`${field}Label`] || person[field], options); const value = button.dataset.codeValue; const nextValues = values.includes(value) ? values.filter((item) => item !== value) : [...values, value]; person[key] = nextValues; if (field === "fire") person.fireLocked = true; if (field === "cpr") person.cprLocked = true; syncPersonCodeState(person, field, options); saveAssignments(); refreshAssignmentView(); queueAssignmentTemplateSync(); }));
     ["arrival", "note"].forEach((field) => document.getElementById(`${field}-${index}`)?.addEventListener("change", (event) => { person[field] = event.target.value; saveAssignments(); }));
   });
 }
@@ -682,7 +697,7 @@ function setupAssignmentEvents() {
   ["monthlyFireCode", "monthlyCprCode"].forEach((id) => document.getElementById(id).addEventListener("change", () => { saveMonthlyCodes(); renderAssignments(); }));
   document.getElementById("dailyForecast").addEventListener("change", (event) => { const plan = currentPlans.find((item) => dateKey(new Date(item.date)) === assignmentDate); if (plan) { plan.scheduled = clampNumber(event.target.value); saveCurrentWeek(); render(); } });
   document.getElementById("scheduleNote").addEventListener("change", (event) => { currentAssignments.forEach((person) => { person.scheduleNote = event.target.value; }); saveAssignments(); });
-  document.getElementById("applyDefaultAssignments").addEventListener("click", () => { currentAssignments = loadAssignments(assignmentDate); syncAssignmentsToWorkforce(); saveAssignments(); render(); showToast("ใช้ค่าเริ่มต้นหน้าที่แล้ว"); });
+  document.getElementById("applyDefaultAssignments").addEventListener("click", () => { currentAssignments = loadAssignments(assignmentDate); syncAssignmentsToWorkforce(); saveAssignments(); refreshAssignmentView(); queueAssignmentTemplateSync(); showToast("ใช้ค่าเริ่มต้นหน้าที่แล้ว"); });
   document.getElementById("generatePdfButton").addEventListener("click", generateSchedulePdf);
 }
 
