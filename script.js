@@ -514,7 +514,7 @@ function activityControlsHtml(person, index) {
 function statusTasks(person, dateText) {
   return statusActivitiesOf(person).map((entry) => {
     if (entry.type === "VAC = ลา") return { task: "Vacation", time: "", className: "status-task-leave" };
-    if (entry.type === "ประชุม/อบรม") return { task: "ประชุม/อบรม", time: trainingTimeForDate(dateText, entry.value), className: "status-task-training" };
+    if (entry.type === "ประชุม/อบรม") return { task: `ประชุม/อบรม (${Number(entry.value) || 1} ชม.)`, time: "", className: "status-task-training" };
     if (entry.type === "Float ออก") return { task: "Float ออก", time: entry.value || FLOAT_PERIODS[0], className: "status-task-float" };
     return { task: "เก็บ ชม.", time: "13.00 - 16.00 น.", className: "status-task-collect" };
   });
