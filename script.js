@@ -8,7 +8,8 @@ const STORAGE = {
   schedules: "careplan-schedules-v1",
   monthlyCodes: "careplan-monthly-codes-v1",
   assignmentTemplate: "careplan-assignment-template-v1",
-  assignmentTemplates: "careplan-assignment-templates-v2"
+  assignmentTemplates: "careplan-assignment-templates-v2",
+  assignmentTemplateSeededWeeks: "careplan-assignment-template-seeded-weeks-v1"
 };
 
 const DEFAULT_ASSIGNMENT_STAFF = [
@@ -222,35 +223,56 @@ function applyAssignmentTemplate(targetAssignments, template, targetKey) {
     return next;
   });
 }
+function templateSignature(template) { return JSON.stringify(template || []); }
 function syncAssignmentTemplates() {
   if (!currentPlans?.length) return;
   const mondayKey = dateKey(new Date(currentPlans[0].date));
+  const tuesdayKey = dateKey(new Date(currentPlans[1].date));
   const wedKey = dateKey(new Date(currentPlans[2].date));
+  const thuKey = dateKey(new Date(currentPlans[3].date));
+  const friKey = dateKey(new Date(currentPlans[4].date));
   const stored = readStorage(STORAGE.assignmentTemplates, {});
   const legacy = readStorage(STORAGE.assignmentTemplate, null);
-  const templates = {
-    "mon-tue-fri": Array.isArray(stored["mon-tue-fri"]) ? stored["mon-tue-fri"] : (Array.isArray(legacy) ? legacy : null),
-    "wed-thu": Array.isArray(stored["wed-thu"]) ? stored["wed-thu"] : null
-  };
-  if (assignmentStaff[assignmentDate]?.length && currentAssignments?.length) {
-    templates[assignmentDayGroup(assignmentDate)] = assignmentTemplateFrom(currentAssignments);
-  }
-  if (!templates["mon-tue-fri"]?.length) {
-    const monday = assignmentStaff[mondayKey]?.length ? loadAssignments(mondayKey) : cloneDefaultAssignments();
-    templates["mon-tue-fri"] = assignmentTemplateFrom(monday);
-  }
-  if (!templates["wed-thu"]?.length) {
-    const wednesday = assignmentStaff[wedKey]?.length ? loadAssignments(wedKey) : applyAssignmentTemplate([], templates["mon-tue-fri"], wedKey);
-    templates["wed-thu"] = assignmentTemplateFrom(wednesday);
-  }
-  currentPlans.forEach((plan) => {
-    const targetKey = dateKey(new Date(plan.date));
-    const group = assignmentDayGroup(targetKey);
-    assignmentStaff[targetKey] = applyAssignmentTemplate(assignmentStaff[targetKey]?.length ? loadAssignments(targetKey) : [], templates[group], targetKey);
+  const seededWeeks = readStorage(STORAGE.assignmentTemplateSeededWeeks, {});
+  const weekKey = dateKey(selectedWeek);
+  const weekAlreadySeeded = Boolean(seededWeeks[weekKey]);
+  let mondayTemplate = Array.isArray(stored["mon-tue-fri"]) ? stored["mon-tue-fri"] : (Array.isArray(legacy) ? legacy : null);
+  let wedTemplate = Array.isArray(stored["wed-thu"]) ? stored["wed-thu"] : null;
+
+  // On a fresh week, seed the source days from the saved Monday/Wednesday templates first,
+  // even if an older version already created default records for those dates.
+  if (!weekAlreadySeeded && mondayTemplate?.length) assignmentStaff[mondayKey] = applyAssignmentTemplate([], mondayTemplate, mondayKey);
+  if (!weekAlreadySeeded && wedTemplate?.length) assignmentStaff[wedKey] = applyAssignmentTemplate([], wedTemplate, wedKey);
+  if (!assignmentStaff[mondayKey]?.length) assignmentStaff[mondayKey] = applyAssignmentTemplate([], null, mondayKey);
+  if (!assignmentStaff[wedKey]?.length) assignmentStaff[wedKey] = applyAssignmentTemplate([], null, wedKey);
+
+  // The source snapshot always comes from Monday/Wednesday, never from a downstream day.
+  const mondayCurrent = loadAssignments(mondayKey);
+  const wedCurrent = loadAssignments(wedKey);
+  const nextMondayTemplate = assignmentTemplateFrom(mondayCurrent);
+  const nextWedTemplate = assignmentTemplateFrom(wedCurrent);
+  const mondayChanged = !mondayTemplate?.length || templateSignature(nextMondayTemplate) !== templateSignature(mondayTemplate);
+  const wedChanged = !wedTemplate?.length || templateSignature(nextWedTemplate) !== templateSignature(wedTemplate);
+  mondayTemplate = nextMondayTemplate;
+  wedTemplate = nextWedTemplate;
+
+  // Monday is the one-way source for Tuesday and Friday; Wednesday is the one-way source for Thursday.
+  const seedTargets = (sourceTemplate, sourceChanged, targets) => targets.forEach((targetKey) => {
+    if (!targetKey) return;
+    if (sourceChanged || !assignmentStaff[targetKey]?.length) {
+      assignmentStaff[targetKey] = applyAssignmentTemplate(assignmentStaff[targetKey]?.length ? loadAssignments(targetKey) : [], sourceTemplate, targetKey);
+    }
   });
+  seedTargets(mondayTemplate, mondayChanged || !weekAlreadySeeded, [tuesdayKey, friKey]);
+  seedTargets(wedTemplate, wedChanged || !weekAlreadySeeded, [thuKey]);
+  seededWeeks[weekKey] = true;
+
+  const templates = { "mon-tue-fri": mondayTemplate, "wed-thu": wedTemplate };
   writeStorage(STORAGE.assignmentTemplates, templates);
-  writeStorage(STORAGE.assignmentTemplate, templates["mon-tue-fri"]);
+  writeStorage(STORAGE.assignmentTemplate, mondayTemplate);
+  writeStorage(STORAGE.assignmentTemplateSeededWeeks, seededWeeks);
   writeStorage(STORAGE.schedules, assignmentStaff);
+  if (weekAssignmentDates().includes(assignmentDate)) currentAssignments = loadAssignments(assignmentDate);
   syncAllAssignmentsToWorkforce();
 }
 function syncMondayTaskDefaults() { syncAssignmentTemplates(); }
@@ -823,9 +845,10 @@ function setWeek(monday) {
   saveAssignments();
   selectedWeek = getMonday(monday);
   currentPlans = loadWeek(selectedWeek);
-  syncMondayTaskDefaults();
   const validDates = currentPlans.map((plan) => dateKey(new Date(plan.date)));
   if (!validDates.includes(assignmentDate)) assignmentDate = validDates[0];
+  currentAssignments = loadAssignments(assignmentDate);
+  syncMondayTaskDefaults();
   currentAssignments = loadAssignments(assignmentDate);
   syncAllAssignmentsToWorkforce();
   lastCalculated = false;
