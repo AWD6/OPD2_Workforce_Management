@@ -1559,3 +1559,68 @@ body { font-size: var(--opd-body-size); }
 @media (max-width: 900px) {
   .assignment-card .code-toggle { min-height: 30px; font-size: 10px; }
 }
+
+/* v18 multi-activity status controls */
+.assignment-card .activity-value-list { display:grid; gap:4px; width:100%; margin-top:4px; }
+.assignment-card .activity-value-row { display:grid; grid-template-columns:minmax(62px,.8fr) minmax(0,1.2fr) auto; gap:4px; align-items:center; width:100%; }
+.assignment-card .activity-value-row > span { color:var(--opd-muted); font-size:10px; font-weight:800; }
+.assignment-card .activity-value-row > small { color:var(--opd-muted); font-size:9px; }
+.assignment-card .work-status { line-height:1.3; white-space:normal; }
+.assignment-card .collect-task-line { color:#21649b; background:#e3f2fd; border-left:3px solid #4b9de8; }
+.assignment-card .collect-task-label { min-width:0; font-weight:800; }
+.assignment-card .collect-task-time { min-width:0; color:#1565c0; font-weight:800; }
+
+/* v18 PDF balance: prioritizeหน้าที่/เวลา and reduce ปภ.1/2 width */
+.print-schedule table,
+.download-pdf table { table-layout:fixed; width:100%; }
+.print-schedule table th:nth-child(1), .print-schedule table td:nth-child(1),
+.download-pdf table th:nth-child(1), .download-pdf table td:nth-child(1) { width:14%; }
+.print-schedule table th:nth-child(2), .print-schedule table td:nth-child(2),
+.download-pdf table th:nth-child(2), .download-pdf table td:nth-child(2) { width:17%; }
+.print-schedule table th:nth-child(3), .print-schedule table td:nth-child(3),
+.download-pdf table th:nth-child(3), .download-pdf table td:nth-child(3) { width:30%; }
+.print-schedule table th:nth-child(4), .print-schedule table td:nth-child(4),
+.download-pdf table th:nth-child(4), .download-pdf table td:nth-child(4) { width:8%; }
+.print-schedule table th:nth-child(5), .print-schedule table td:nth-child(5),
+.download-pdf table th:nth-child(5), .download-pdf table td:nth-child(5) { width:19%; }
+.print-schedule table th:nth-child(6), .print-schedule table td:nth-child(6),
+.download-pdf table th:nth-child(6), .download-pdf table td:nth-child(6) { width:12%; }
+.print-schedule td, .download-pdf td { overflow-wrap:break-word; word-break:normal; }
+.print-schedule .pdf-task-line, .download-pdf .pdf-task-line { display:block; white-space:normal; word-break:normal; overflow-wrap:break-word; margin:0 0 2px; }
+.download-pdf .pdf-task-line { font-size:9.5px; }
+@media (min-width:901px) and (max-width:1400px) {
+  .assignment-card .activity-value-row > span { font-size:9px; }
+  .assignment-card .activity-value-row > small { font-size:8px; }
+}
+
+/* v18 multi-activity PDF pills */
+.print-schedule .activity-pill-leave, .download-pdf .activity-pill-leave { color:#a83f35; background:#ffd1c8; }
+.print-schedule .activity-pill-training, .download-pdf .activity-pill-training { color:#6d4c00; background:#fff1a8; }
+.print-schedule .activity-pill-collect, .download-pdf .activity-pill-collect { color:#1565c0; background:#bbdefb; }
+.print-schedule .activity-pill-float, .download-pdf .activity-pill-float { color:#1a237e; background:#c5cae9; }
+
+/* v19 status-to-task rows and clearer activity colors */
+.assignment-card .status-task-line { grid-template-columns:18px minmax(72px,.78fr) minmax(112px,1.22fr); gap:4px; align-items:center; }
+.assignment-card .status-task-label { min-width:0; font-weight:800; }
+.assignment-card .status-task-time { min-width:0; white-space:nowrap; font-weight:800; }
+.assignment-card .status-task-leave { color:#b71c1c; background:#ffebee; border-left:3px solid #e53935; }
+.assignment-card .status-task-training { color:#7a4f00; background:#fff8d6; border-left:3px solid #f9a825; }
+.assignment-card .status-task-float { color:#0d47a1; background:#e3f2fd; border-left:3px solid #1976d2; }
+.assignment-card .status-task-collect { color:#006064; background:#e0f7fa; border-left:3px solid #00acc1; }
+.assignment-row.is-leave { background:linear-gradient(90deg,#fff5f5 0%,#ffcdd2 100%) !important; box-shadow:inset 4px 0 #e53935,inset 0 1px rgba(255,255,255,.9); }
+.assignment-row.is-training { background:linear-gradient(90deg,#fffdf0 0%,#ffe082 100%) !important; box-shadow:inset 4px 0 #f9a825,inset 0 1px rgba(255,255,255,.9); }
+.assignment-row.is-collect { background:linear-gradient(90deg,#effcfd 0%,#b2ebf2 100%) !important; box-shadow:inset 4px 0 #00acc1,inset 0 1px rgba(255,255,255,.9); }
+.assignment-row.is-float { background:linear-gradient(90deg,#f1f8ff 0%,#90caf9 100%) !important; box-shadow:inset 4px 0 #1976d2,inset 0 1px rgba(255,255,255,.9); }
+.print-schedule tr.leave-row td, .download-pdf tr.leave-row td { background:#ffcdd2 !important; color:#b71c1c; }
+.print-schedule tr.training-row td, .download-pdf tr.training-row td { background:#ffe082 !important; color:#6d4c00; }
+.print-schedule tr.collect-row td, .download-pdf tr.collect-row td { background:#b2ebf2 !important; color:#006064; }
+.print-schedule tr.float-row td, .download-pdf tr.float-row td { background:#90caf9 !important; color:#0d47a1; }
+.print-schedule .activity-pill-leave, .download-pdf .activity-pill-leave { background:#ef9a9a !important; color:#7f0000 !important; }
+.print-schedule .activity-pill-training, .download-pdf .activity-pill-training { background:#ffd54f !important; color:#5d4037 !important; }
+.print-schedule .activity-pill-collect, .download-pdf .activity-pill-collect { background:#80deea !important; color:#004d40 !important; }
+.print-schedule .activity-pill-float, .download-pdf .activity-pill-float { background:#64b5f6 !important; color:#0d47a1 !important; }
+.print-schedule .pdf-task-line, .download-pdf .pdf-task-line { display:block; white-space:normal; word-break:normal; overflow-wrap:break-word; margin:0 0 2px; }
+@media (min-width:901px) and (max-width:1400px) {
+  .assignment-card .status-task-line { grid-template-columns:16px minmax(64px,.78fr) minmax(96px,1.22fr); }
+  .assignment-card .status-task-time { white-space:normal; }
+}

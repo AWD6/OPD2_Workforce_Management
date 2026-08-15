@@ -25,18 +25,56 @@ const DEFAULT_ASSIGNMENT_STAFF = [
 ];
 const BREAK_OPTIONS = ["11.00", "12.00", "12.30", "13.00"];
 const ACTIVITY_OPTIONS = ["ปฏิบัติงาน", "VAC = ลา", "ประชุม/อบรม", "Float ออก", "เก็บชั่วโมง"];
+const STATUS_ACTIVITY_TYPES = ACTIVITY_OPTIONS.slice(1);
 const TRAINING_HOURS = ["1", "2", "3", "4", "5", "6", "7"];
-const FLOAT_PERIODS = ["08.00 - 12.00 น.", "12.00 - 16.00 น.", "08.00 - 16.00 น."];
-const FLOAT_NET_HOURS = { "08.00 - 12.00 น.": 4, "12.00 - 16.00 น.": 4, "08.00 - 16.00 น.": 7 };
+const FLOAT_PERIODS = ["08.00 - 12.00 น.", "13.00 - 16.00 น.", "08.00 - 16.00 น."];
+const FLOAT_NET_HOURS = { "08.00 - 12.00 น.": 4, "13.00 - 16.00 น.": 3, "08.00 - 16.00 น.": 7 };
 const WORKDAY_TIMES = { 1: "07.50 - 16.00 น.", 2: "07.50 - 16.00 น.", 3: "07.45 - 16.00 น.", 4: "07.45 - 16.00 น.", 5: "07.50 - 16.00 น." };
 const COLLECT_WORK_HOURS = 4;
 const COLLECT_DEDUCTION_HOURS = 3;
 function netFloatHours(period) { return FLOAT_NET_HOURS[period] || 4; }
+function normalizeTimeText(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  if (!/\d/.test(text)) return text;
+  const normalized = text.replace(/[–—]/g, " - ").replace(/\s+/g, " ").replace(/\s*-\s*/g, " - ").trim();
+  return /น\.\s*$/.test(normalized) ? normalized : `${normalized} น.`;
+}
 function workTimeForDate(dateText) { const day = new Date(`${dateText}T00:00:00`).getDay(); return WORKDAY_TIMES[day] || WORKDAY_TIMES[1]; }
+function workStartMinutes(dateText) { const start = workTimeForDate(dateText).split(" - ")[0].replace(" น.", ""); const [hour, minute] = start.split(/[.:]/).map(Number); return hour * 60 + minute; }
+function thaiClock(minutes) { const hour = Math.floor(minutes / 60); const minute = minutes % 60; return `${String(hour).padStart(2, "0")}.${String(minute).padStart(2, "0")}`; }
+function trainingTimeForDate(dateText, hours) { const start = workStartMinutes(dateText); return `${thaiClock(start)} - ${thaiClock(start + (Number(hours) || 1) * 60)} น.`; }
 function isAutoWorkTime(value) { const text = String(value || "").trim(); return !text || /^(07[:.]45|07[:.]50)\s*[–-]\s*(13[:.]00|16[:.]00)(?:\s*น\.)?$/.test(text) || /^(07[:.]50)\s*[–-]\s*09[:.]30$/.test(text); }
 function isMondayDate(dateText) { return new Date(`${dateText}T00:00:00`).getDay() === 1; }
-function assignmentRowClass(person) { return person.activity === "VAC = ลา" ? "is-leave" : person.activity === "ประชุม/อบรม" ? "is-training" : person.activity === "เก็บชั่วโมง" ? "is-collect" : person.activity === "Float ออก" ? "is-float" : ""; }
-function assignmentPrintClass(person) { return person.activity === "VAC = ลา" ? "leave-row" : person.activity === "ประชุม/อบรม" ? "training-row" : person.activity === "เก็บชั่วโมง" ? "collect-row" : person.activity === "Float ออก" ? "float-row" : ""; }
+function normalizeActivityType(type) {
+  return String(type || "").trim() === "เก็บ ชม." ? "เก็บชั่วโมง" : String(type || "").trim();
+}
+function activityDefaultValue(type) {
+  return type === "ประชุม/อบรม" ? "1" : type === "Float ออก" ? FLOAT_PERIODS[0] : "";
+}
+function activitySlug(type) { return type === "ประชุม/อบรม" ? "training" : type === "Float ออก" ? "float" : "status"; }
+function activityDisplayLabel(type) { return type === "VAC = ลา" ? "VAC" : type === "เก็บชั่วโมง" ? "เก็บ ชม." : type; }
+function normalizeStatusActivities(person) {
+  const legacy = person.activity && person.activity !== "ปฏิบัติงาน" ? [{ type: person.activity, value: person.activityValue }] : [];
+  const source = Array.isArray(person.statusActivities) ? person.statusActivities : legacy;
+  const seen = new Set();
+  person.statusActivities = source.map((entry) => {
+    const type = normalizeActivityType(typeof entry === "string" ? entry : entry?.type || entry?.activity);
+    if (!STATUS_ACTIVITY_TYPES.includes(type) || seen.has(type)) return null;
+    seen.add(type);
+    return { type, value: typeof entry === "string" ? activityDefaultValue(type) : (entry?.value ?? activityDefaultValue(type)) };
+  }).filter(Boolean);
+  const primary = person.statusActivities[0];
+  person.activity = primary?.type || "ปฏิบัติงาน";
+  person.activityValue = primary?.value || "";
+  person.status = person.activity;
+  return person.statusActivities;
+}
+function statusActivitiesOf(person) { return normalizeStatusActivities(person); }
+function hasStatusActivity(person, type) { return statusActivitiesOf(person).some((entry) => entry.type === type); }
+function statusActivityOf(person, type) { return statusActivitiesOf(person).find((entry) => entry.type === type); }
+function assignmentRowClass(person) { return statusActivitiesOf(person).map((entry) => entry.type === "VAC = ลา" ? "is-leave" : entry.type === "ประชุม/อบรม" ? "is-training" : entry.type === "เก็บชั่วโมง" ? "is-collect" : entry.type === "Float ออก" ? "is-float" : "").filter(Boolean).join(" "); }
+function assignmentPrintClass(person) { return statusActivitiesOf(person).map((entry) => entry.type === "VAC = ลา" ? "leave-row" : entry.type === "ประชุม/อบรม" ? "training-row" : entry.type === "เก็บชั่วโมง" ? "collect-row" : entry.type === "Float ออก" ? "float-row" : "").filter(Boolean).join(" "); }
 function taskIsFloat(task) { return /float/i.test(String(task || "")); }
 const LOCATION_OPTIONS = ["-", "ปภ.1 คัดกรอง", "ปภ.1 พบแพทย์", "ปภ.1 ห้อง Cysto", "ปภ.2 คัดกรอง", "ปภ.2 พบแพทย์", "ปภ.2 ห้อง Cysto"];
 const FIRE_CODE_OPTIONS = ["C1 สื่อสาร/ประสานงาน", "C2 เคลื่อนย้าย", "C3 ดับเพลิง"];
@@ -69,19 +107,25 @@ let monthlyCodes = readStorage(STORAGE.monthlyCodes, {});
 let currentAssignments = loadAssignments(assignmentDate);
 
 function monthKey(dateText) { return String(dateText || assignmentDate).slice(0, 7); }
-function cloneDefaultAssignments() { return DEFAULT_ASSIGNMENT_STAFF.map((person) => ({ ...person, time: WORKDAY_TIMES[1], location: "-", status: "ปฏิบัติงาน", activity: "ปฏิบัติงาน", activityValue: "", break: "12.00", arrival: "", note: "", taskOverride: false, activities: [{ task: normalizeTaskName(person.task), time: WORKDAY_TIMES[1] }] })); }
+function cloneDefaultAssignments() { return DEFAULT_ASSIGNMENT_STAFF.map((person) => ({ ...person, time: WORKDAY_TIMES[1], location: "-", status: "ปฏิบัติงาน", activity: "ปฏิบัติงาน", activityValue: "", statusActivities: [], break: "12.00", arrival: "", note: "", taskOverride: false, activities: [{ task: normalizeTaskName(person.task), time: WORKDAY_TIMES[1] }] })); }
 function loadAssignments(dateText) {
   const saved = assignmentStaff[dateText];
   const defaults = cloneDefaultAssignments();
   const result = saved?.length ? saved.map((item, index) => ({ ...defaults[index], ...item, activities: (item.activities?.length ? item.activities : [{ task: item.task || defaults[index].task, time: item.time || defaults[index].time }]).map((activity) => ({ ...activity, task: normalizeTaskName(activity.task) })) })) : defaults;
+  result.forEach((person) => normalizeStatusActivities(person));
   if (saved?.length) result.forEach((person, index) => { if (!saved[index]?.location) person.location = "-"; });
   const defaultTime = workTimeForDate(dateText);
   result.forEach((person) => {
     syncPersonCodeState(person, "fire", FIRE_CODE_OPTIONS);
     syncPersonCodeState(person, "cpr", CPR_CODE_OPTIONS);
     if (person.name === "มณีวรรณ" && !saved?.length) { person.cprCodes = ["A ตามแพทย์/ประสานงาน"]; syncPersonCodeState(person, "cpr", CPR_CODE_OPTIONS); }
-    if (!person.timeLocked && isAutoWorkTime(person.time)) person.time = defaultTime;
-    person.activities = (person.activities || []).map((activity) => (!activity.timeLocked && isAutoWorkTime(activity.time)) ? { ...activity, time: defaultTime } : activity);
+    if (hasStatusActivity(person, "เก็บชั่วโมง")) person.break = "13.00";
+    if (!person.timeLocked && isAutoWorkTime(person.time)) person.time = normalizeTimeText(defaultTime);
+    else person.time = normalizeTimeText(person.time);
+    person.activities = (person.activities || []).map((activity) => {
+      const nextTime = !activity.timeLocked && isAutoWorkTime(activity.time) ? defaultTime : activity.time;
+      return { ...activity, time: normalizeTimeText(nextTime) };
+    });
   });
   return result;
 }
@@ -91,16 +135,25 @@ function roleSuffix(role) { return role === "nurse" ? "Nurse" : role === "pn" ? 
 function syncAssignmentsToWorkforce() {
   const plan = currentPlans.find((item) => dateKey(new Date(item.date)) === assignmentDate);
   if (!plan || plan.holiday) return;
-  const allocation = { leaveNurse: 0, leavePn: 0, leaveHp: 0, trainingHours: 0, floatHours: 0, collectHours: 0, collectWorkHours: 0 };
+  const allocation = { leaveNurse: 0, leavePn: 0, leaveHp: 0, trainingHours: 0, floatHours: 0, collectHours: 0, collectWorkHours: 0, activityOverlapHours: 0 };
   const roleActivity = { nurse: { training: 0, float: 0, collect: 0 }, pn: { training: 0, float: 0, collect: 0 }, hp: { training: 0, float: 0, collect: 0 } };
   currentAssignments.forEach((person) => {
     const role = roleKeyForAssignment(person);
-    const activity = person.activity || "ปฏิบัติงาน";
+    const entries = statusActivitiesOf(person);
     const suffix = roleSuffix(role);
-    if (activity === "VAC = ลา") allocation[`leave${suffix}`] += 1;
-    if (activity === "ประชุม/อบรม") { const hours = Number(person.activityValue) || 1; allocation.trainingHours += hours; roleActivity[role].training += hours; }
-    if (activity === "Float ออก") { const hours = netFloatHours(person.activityValue); allocation.floatHours += hours; roleActivity[role].float += hours; }
-    if (activity === "เก็บชั่วโมง") { allocation.collectHours += COLLECT_DEDUCTION_HOURS; allocation.collectWorkHours += COLLECT_WORK_HOURS; roleActivity[role].collect += COLLECT_WORK_HOURS; }
+    const leave = entries.some((entry) => entry.type === "VAC = ลา");
+    const training = entries.find((entry) => entry.type === "ประชุม/อบรม");
+    const float = entries.find((entry) => entry.type === "Float ออก");
+    const collect = entries.some((entry) => entry.type === "เก็บชั่วโมง");
+    if (leave) allocation[`leave${suffix}`] += 1;
+    if (training) { const hours = Number(training.value) || 1; allocation.trainingHours += hours; roleActivity[role].training += hours; }
+    if (float) { const hours = netFloatHours(float.value); allocation.floatHours += hours; roleActivity[role].float += hours; }
+    if (collect) { allocation.collectHours += COLLECT_DEDUCTION_HOURS; allocation.collectWorkHours += COLLECT_WORK_HOURS; roleActivity[role].collect += COLLECT_WORK_HOURS; }
+    if (float && collect) {
+      const floatHours = netFloatHours(float.value);
+      const unionHours = float.value === FLOAT_PERIODS[0] ? 7 : float.value === FLOAT_PERIODS[1] ? 3 : 7;
+      allocation.activityOverlapHours += Math.max(floatHours + COLLECT_DEDUCTION_HOURS - unionHours, 0);
+    }
   });
   plan.allocation = allocation;
   plan.roleActivity = roleActivity;
@@ -114,6 +167,7 @@ function assignmentTemplateFrom(mondayAssignments) {
     activity: "ปฏิบัติงาน",
     status: "ปฏิบัติงาน",
     activityValue: "",
+    statusActivities: [],
     arrival: "",
     note: "",
     scheduleNote: "",
@@ -161,7 +215,7 @@ function syncMondayTaskDefaults() {
         if (JSON.stringify(target.cprCodes || []) !== JSON.stringify(sourceCpr)) { target.cprCodes = sourceCpr; syncPersonCodeState(target, "cpr", CPR_CODE_OPTIONS); changed = true; }
       }
       if (target.taskOverride !== true) {
-        target.activities = (source.activities || []).map((activity) => ({ ...activity, time: workTimeForDate(targetKey), timeLocked: false }));
+        target.activities = (source.activities || []).map((activity) => ({ ...activity, time: normalizeTimeText(workTimeForDate(targetKey)), timeLocked: false }));
         target.task = source.task;
         changed = true;
       }
@@ -282,7 +336,7 @@ function makeDefaultPlans(monday) {
     date: addDays(monday, index).toISOString(),
     holiday: false,
     ...defaults[index],
-    allocation: { leaveNurse: 0, leavePn: 0, leaveHp: 0, trainingHours: 0, floatHours: 0, collectHours: 0, collectWorkHours: 0 },
+    allocation: { leaveNurse: 0, leavePn: 0, leaveHp: 0, trainingHours: 0, floatHours: 0, collectHours: 0, collectWorkHours: 0, activityOverlapHours: 0 },
     roleActivity: {
       nurse: { training: 0, float: 0, collect: 0 },
       pn: { training: 0, float: 0, collect: 0 },
@@ -305,7 +359,8 @@ function normalizePlan(plan, index, monday) {
       trainingHours: clampNumber(legacy.trainingHours ?? legacy.trainingPeople),
       floatHours: clampNumber(legacy.floatHours),
       collectHours: clampNumber(legacy.collectHours ?? legacy.collectPeople ?? legacy.floatPeople),
-      collectWorkHours: clampNumber(legacy.collectWorkHours ?? legacy.collectHours)
+      collectWorkHours: clampNumber(legacy.collectWorkHours ?? legacy.collectHours),
+      activityOverlapHours: clampNumber(legacy.activityOverlapHours)
     },
     roleActivity: {
       nurse: { training: clampNumber(roleActivity.nurse?.training) + clampNumber(roleActivity.hn?.training), float: clampNumber(roleActivity.nurse?.float) + clampNumber(roleActivity.hn?.float), collect: clampNumber(roleActivity.nurse?.collect) + clampNumber(roleActivity.hn?.collect) },
@@ -360,7 +415,7 @@ function calculateProduct(plan) {
   const a = plan.allocation;
   const baseCapacityHours = totalStaff() * 7;
   const leaveHours = (a.leaveNurse + a.leavePn + a.leaveHp) * 7;
-  const removedHours = leaveHours + a.trainingHours + a.floatHours + a.collectHours;
+  const removedHours = leaveHours + a.trainingHours + a.floatHours + a.collectHours - (a.activityOverlapHours || 0);
   return Math.round((demand(plan) / Math.max(baseCapacityHours - removedHours, 1)) * 100);
 }
 
@@ -435,7 +490,8 @@ function renderPlanningRows() {
 function staffingRoleCell(role, plan) {
   const values = plan.roleActivity?.[role] || { training: 0, float: 0, collect: 0 };
   const leave = plan.allocation?.[`leave${roleSuffix(role)}`] || 0;
-  return `<div class="allocation-role-cell role-${role}"><strong>${roleLabel(role)}</strong><span><em>ลา</em><b>${leave}<small> คน</small></b></span><span><em>อ/ป</em><b>${values.training}<small> ชม.</small></b></span><span><em>Float</em><b>${values.float}<small> ชม.</small></b></span><span><em>เก็บ</em><b>${values.collect}<small> ชม.</small></b></span></div>`;
+  const collectNote = values.collect ? " ชม. / หัก 3" : " ชม.";
+  return `<div class="allocation-role-cell role-${role}"><strong>${roleLabel(role)}</strong><span><em>ลา</em><b>${leave}<small> คน</small></b></span><span><em>อ/ป</em><b>${values.training}<small> ชม.</small></b></span><span><em>Float</em><b>${values.float}<small> ชม.</small></b></span><span><em>เก็บ</em><b>${values.collect}<small>${collectNote}</small></b></span></div>`;
 }
 function renderStaffingRows() {
   const container = document.getElementById("staffingRows");
@@ -446,6 +502,41 @@ function renderStaffingRows() {
 }
 
 function assignmentSelect(id, options, value) { return `<select id="${id}">${options.map((option) => `<option value="${escapeHtml(option)}" ${option === value ? "selected" : ""}>${escapeHtml(option || "—")}</option>`).join("")}</select>`; }
+function activityControlsHtml(person, index) {
+  const entries = statusActivitiesOf(person);
+  const valueRows = entries.filter((entry) => entry.type === "ประชุม/อบรม" || entry.type === "Float ออก").map((entry) => {
+    const slug = activitySlug(entry.type);
+    const options = entry.type === "ประชุม/อบรม" ? TRAINING_HOURS : FLOAT_PERIODS;
+    return `<div class="activity-value-row"><span>${escapeHtml(activityDisplayLabel(entry.type))}</span>${assignmentSelect(`activity-value-${index}-${slug}`, options, entry.value || activityDefaultValue(entry.type))}${entry.type === "ประชุม/อบรม" ? "<small>ชม.</small>" : ""}</div>`;
+  }).join("");
+  return `<div class="activity-cell"><span class="work-status">${entries.length ? escapeHtml(entries.map((entry) => activityDisplayLabel(entry.type)).join(" · ")) : "ปฏิบัติงาน"}</span><div class="activity-buttons">${STATUS_ACTIVITY_TYPES.map((option) => `<button type="button" class="activity-button ${entries.some((entry) => entry.type === option) ? "is-active" : ""}" data-activity="${index}" data-value="${escapeHtml(option)}">${escapeHtml(activityDisplayLabel(option))}</button>`).join("")}</div>${valueRows ? `<div class="activity-value-list">${valueRows}</div>` : ""}</div>`;
+}
+function statusTasks(person, dateText) {
+  return statusActivitiesOf(person).map((entry) => {
+    if (entry.type === "VAC = ลา") return { task: "Vacation", time: "", className: "status-task-leave" };
+    if (entry.type === "ประชุม/อบรม") return { task: "ประชุม/อบรม", time: trainingTimeForDate(dateText, entry.value), className: "status-task-training" };
+    if (entry.type === "Float ออก") return { task: "Float ออก", time: entry.value || FLOAT_PERIODS[0], className: "status-task-float" };
+    return { task: "เก็บ ชม.", time: "13.00 - 16.00 น.", className: "status-task-collect" };
+  });
+}
+function statusTaskHtml(person, dateText) {
+  const offset = (person.activities || []).length;
+  return statusTasks(person, dateText).map((activity, index) => `<div class="task-line status-task-line ${activity.className}"><span class="task-number">${offset + index + 1}.</span><span class="status-task-label">${escapeHtml(activity.task)}</span><span class="status-task-time">${escapeHtml(activity.time)}</span></div>`).join("");
+}
+function toggleStatusActivity(person, type) {
+  const entries = statusActivitiesOf(person);
+  if (type === "VAC = ลา") {
+    person.statusActivities = entries.some((entry) => entry.type === type) ? [] : [{ type, value: "" }];
+  } else {
+    const next = entries.filter((entry) => entry.type !== "VAC = ลา");
+    const index = next.findIndex((entry) => entry.type === type);
+    if (index >= 0) next.splice(index, 1);
+    else next.push({ type, value: activityDefaultValue(type) });
+    person.statusActivities = next;
+  }
+  normalizeStatusActivities(person);
+  if (hasStatusActivity(person, "เก็บชั่วโมง")) person.break = "13.00";
+}
 function renderAssignments() {
   const dayButtons = document.getElementById("assignmentDayButtons");
   if (!dayButtons) return;
@@ -460,16 +551,17 @@ function renderAssignments() {
   document.getElementById("scheduleNote").value = currentAssignments[0]?.scheduleNote || "";
   document.getElementById("assignmentRows").innerHTML = currentAssignments.map((person, index) => `<div class="assignment-row ${assignmentRowClass(person)}">
     <div class="assignment-person"><strong>${escapeHtml(person.name)}</strong><small>${escapeHtml(person.role)}</small></div>
-    <div class="activity-cell"><span class="work-status">ปฏิบัติงาน</span><div class="activity-buttons">${ACTIVITY_OPTIONS.slice(1).map((option) => `<button type="button" class="activity-button ${person.activity === option ? "is-active" : ""}" data-activity="${index}" data-value="${escapeHtml(option)}">${escapeHtml(option.split(" = ")[0])}</button>`).join("")}</div>${person.activity === "ประชุม/อบรม" ? assignmentSelect(`activity-value-${index}`, TRAINING_HOURS, person.activityValue || "1") + `<small>ชม.</small>` : person.activity === "Float ออก" ? assignmentSelect(`activity-value-${index}`, FLOAT_PERIODS, person.activityValue || FLOAT_PERIODS[0]) : ""}</div>
-    <div>${assignmentSelect(`break-${index}`, BREAK_OPTIONS, person.break)}</div>
-    <div class="tasks-cell">${person.activities.map((activity, taskIndex) => { const hasCustomTask = !TASK_OPTIONS.includes(activity.task) || activity.task === "อื่นๆ"; const floatClass = taskIsFloat(activity.task) ? "float-task" : ""; return `<div class="task-line ${hasCustomTask ? "has-custom-task" : ""} ${floatClass}"><span class="task-number">${taskIndex + 1}.</span>${assignmentSelect(`task-${index}-${taskIndex}`, TASK_OPTIONS, TASK_OPTIONS.includes(activity.task) ? activity.task : "อื่นๆ")}${hasCustomTask ? `<input id="custom-task-${index}-${taskIndex}" value="${escapeHtml(TASK_OPTIONS.includes(activity.task) ? "" : activity.task)}" placeholder="กรอกหน้าที่อื่นๆ" />` : ""}<input id="time-${index}-${taskIndex}" value="${escapeHtml(activity.time)}" aria-label="เวลาหน้าที่" placeholder="เวลา" />${taskIndex > 0 ? `<button type="button" class="remove-task-button" data-remove-task="${index}" data-task-index="${taskIndex}" aria-label="ลบหน้าที่">ลบ</button>` : ""}</div>`; }).join("")}<button type="button" class="add-task-button" data-add-task="${index}">+ เพิ่มหน้าที่</button></div>
+    ${activityControlsHtml(person, index)}
+    <div>${assignmentSelect(`break-${index}`, hasStatusActivity(person, "เก็บชั่วโมง") ? ["13.00"] : BREAK_OPTIONS, "13.00" === person.break ? "13.00" : person.break)}</div>
+    <div class="tasks-cell">${person.activities.map((activity, taskIndex) => { const hasCustomTask = !TASK_OPTIONS.includes(activity.task) || activity.task === "อื่นๆ"; const floatClass = taskIsFloat(activity.task) ? "float-task" : ""; return `<div class="task-line ${hasCustomTask ? "has-custom-task" : ""} ${floatClass}"><span class="task-number">${taskIndex + 1}.</span>${assignmentSelect(`task-${index}-${taskIndex}`, TASK_OPTIONS, TASK_OPTIONS.includes(activity.task) ? activity.task : "อื่นๆ")}${hasCustomTask ? `<input id="custom-task-${index}-${taskIndex}" value="${escapeHtml(TASK_OPTIONS.includes(activity.task) ? "" : activity.task)}" placeholder="กรอกหน้าที่อื่นๆ" />` : ""}<input id="time-${index}-${taskIndex}" value="${escapeHtml(activity.time)}" aria-label="เวลาหน้าที่" placeholder="เวลา" />${taskIndex > 0 ? `<button type="button" class="remove-task-button" data-remove-task="${index}" data-task-index="${taskIndex}" aria-label="ลบหน้าที่">ลบ</button>` : ""}</div>`; }).join("")}${statusTaskHtml(person, assignmentDate)}<button type="button" class="add-task-button" data-add-task="${index}">+ เพิ่มหน้าที่</button></div>
     <div class="location-buttons">${LOCATION_OPTIONS.map((location) => `<button type="button" class="location-button ${person.location === location ? "is-active" : ""}" data-location="${index}" data-value="${escapeHtml(location)}">${escapeHtml(location)}</button>`).join("")}</div>
     <div class="code-cell"><div class="code-group"><small>อัคคีภัย</small><div class="code-toggle-list">${codeToggleHtml(index, "fire", FIRE_CODE_OPTIONS, person.fireCodes || [])}</div></div><div class="code-group"><small>CPR</small><div class="code-toggle-list">${codeToggleHtml(index, "cpr", CPR_CODE_OPTIONS, person.cprCodes || [])}</div></div></div>
     <div><input id="arrival-${index}" value="${escapeHtml(person.arrival)}" placeholder="เวลา / เซ็นชื่อ" /><input id="note-${index}" value="${escapeHtml(person.note)}" placeholder="หมายเหตุ" /></div>
   </div>`).join("");
   currentAssignments.forEach((person, index) => {
-    document.querySelectorAll(`[data-activity="${index}"]`).forEach((button) => button.addEventListener("click", () => { const nextActivity = button.dataset.value; const isTurningOff = person.activity === nextActivity; person.activity = isTurningOff ? "ปฏิบัติงาน" : nextActivity; person.activityValue = person.activity === "ประชุม/อบรม" ? "1" : person.activity === "Float ออก" ? FLOAT_PERIODS[0] : ""; person.status = person.activity; syncAssignmentsToWorkforce(); saveAssignments(); render(); }));
-    ["break", "activity-value"].forEach((field) => document.getElementById(`${field}-${index}`)?.addEventListener("change", (event) => { const targetField = field === "activity-value" ? "activityValue" : field; person[targetField] = event.target.value; if (field === "break") { person.breakLocked = true; if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); } syncAssignmentsToWorkforce(); saveAssignments(); render(); }));
+    document.querySelectorAll(`[data-activity="${index}"]`).forEach((button) => button.addEventListener("click", () => { toggleStatusActivity(person, button.dataset.value); syncAssignmentsToWorkforce(); saveAssignments(); render(); }));
+    ["training", "float"].forEach((slug) => document.getElementById(`activity-value-${index}-${slug}`)?.addEventListener("change", (event) => { const type = slug === "training" ? "ประชุม/อบรม" : "Float ออก"; const entry = statusActivityOf(person, type); if (entry) entry.value = event.target.value; normalizeStatusActivities(person); syncAssignmentsToWorkforce(); saveAssignments(); render(); }));
+    document.getElementById(`break-${index}`)?.addEventListener("change", (event) => { person.break = hasStatusActivity(person, "เก็บชั่วโมง") ? "13.00" : event.target.value; person.breakLocked = true; if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); syncAssignmentsToWorkforce(); saveAssignments(); render(); });
     document.querySelectorAll(`[data-location="${index}"]`).forEach((button) => button.addEventListener("click", () => { person.location = button.dataset.value; person.locationLocked = true; saveAssignments(); if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); renderAssignments(); }));
     document.querySelector(`[data-add-task="${index}"]`)?.addEventListener("click", () => { person.activities.push({ task: "อื่นๆ", time: "", timeLocked: true }); person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); renderAssignments(); });
     document.querySelectorAll(`[data-remove-task="${index}"]`).forEach((button) => button.addEventListener("click", () => { const taskIndex = Number(button.dataset.taskIndex); if (taskIndex <= 0 || taskIndex >= person.activities.length) return; person.activities.splice(taskIndex, 1); person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); renderAssignments(); }));
@@ -482,16 +574,33 @@ function renderAssignments() {
     ["arrival", "note"].forEach((field) => document.getElementById(`${field}-${index}`)?.addEventListener("change", (event) => { person[field] = event.target.value; saveAssignments(); }));
   });
 }
-function formatActivity(person) { const label = person.activity || "ปฏิบัติงาน"; return label === "ประชุม/อบรม" ? `${label} ${person.activityValue || 1} ชม.` : label === "Float ออก" ? `${label} ${person.activityValue || "08.00 - 12.00 น."} (${netFloatHours(person.activityValue)} ชม.)` : label === "เก็บชั่วโมง" ? `${label} เลิกเที่ยง (4 ชม.)` : label; }
-function taskText(person) { return person.activities.map((activity, index) => `<span class="pdf-task-line">${index + 1}.${escapeHtml(activity.task)}${activity.time ? ` ${escapeHtml(activity.time)}` : ""}</span>`).join(""); }
+function formatActivity(person) {
+  const entries = statusActivitiesOf(person);
+  if (!entries.length) return "ปฏิบัติงาน";
+  return entries.map((entry) => entry.type === "ประชุม/อบรม" ? `${activityDisplayLabel(entry.type)} ${entry.value || 1} ชม.` : entry.type === "Float ออก" ? `${activityDisplayLabel(entry.type)} ${entry.value || FLOAT_PERIODS[0]} (${netFloatHours(entry.value)} ชม.)` : activityDisplayLabel(entry.type)).join(" · ");
+}
+function taskText(person, dateText) {
+  const tasks = (person.activities || []).map((activity) => ({ task: activity.task, time: normalizeTimeText(activity.time) }));
+  statusTasks(person, dateText).forEach((activity) => tasks.push({ task: activity.task, time: activity.time }));
+  return tasks.map((activity, index) => `<span class="pdf-task-line">${index + 1}. ${escapeHtml(activity.task)}${activity.time ? ` ${escapeHtml(normalizeTimeText(activity.time))}` : ""}</span>`).join("");
+}
+function activityStatusHtml(person) {
+  const entries = statusActivitiesOf(person);
+  if (!entries.length) return `<span class="status-pill">ปฏิบัติงาน</span>`;
+  return entries.map((entry) => {
+    const value = entry.type === "ประชุม/อบรม" ? ` ${entry.value || 1} ชม.` : entry.type === "Float ออก" ? ` ${entry.value || FLOAT_PERIODS[0]} (${netFloatHours(entry.value)} ชม.)` : "";
+    const pillClass = entry.type === "VAC = ลา" ? "activity-pill-leave" : entry.type === "ประชุม/อบรม" ? "activity-pill-training" : entry.type === "Float ออก" ? "activity-pill-float" : "activity-pill-collect";
+    return `<span class="status-pill ${pillClass}">${escapeHtml(activityDisplayLabel(entry.type) + value)}</span>`;
+  }).join(" ");
+}
 function printCodeLegendHtml() { return `<div class="print-code-legend"><strong>คำอธิบาย Code และสถานที่</strong><span><b>Code อัคคีภัย</b> C1 สื่อสาร/ประสานงาน · C2 เคลื่อนย้าย · C3 ดับเพลิง</span><span><b>Code CPR</b> A ตามแพทย์/ประสานงาน · P1 ควบคุมสั่งการ · P2 AED/Defibrillator · P3 สารน้ำ/ยา/เจาะเลือด · P4 บันทึก CPR · P5 ทางเดินหายใจ · P6 chest compression</span><span><b>A ตามแพทย์/ประสานงาน:</b> OPD 110 โทร 34605 · OPD 10 โทร 35750–35760 · RR team โทร 38799 · ER โทร 36333 · เปล/เคลื่อนย้าย โทร 35692–35693</span></div>`; }
 function weeklyDayHtml(plan, assignments) {
-  const leaveCount = assignments.filter((person) => person.activity === "VAC = ลา").length;
-  const specialCount = assignments.filter((person) => person.activity !== "ปฏิบัติงาน" && person.activity !== "VAC = ลา").length;
-  const rows = assignments.map((person) => { const isLeave = person.activity === "VAC = ลา"; return `<tr class="${assignmentPrintClass(person)}"><td>${isLeave ? "VACATION" : `<b>${escapeHtml(person.name)}</b><br><small>${escapeHtml(person.role)}</small>`}</td><td><span class="status-pill">${escapeHtml(formatActivity(person))}</span><br>พัก ${escapeHtml(person.break)} น.</td><td>${isLeave ? "ตัดออกจากกำลังคน" : taskText(person)}</td><td>${isLeave ? "—" : escapeHtml(person.location || "-")}</td><td>${escapeHtml(person.fireLabel || person.fire || "—")}<br>${escapeHtml(person.cprLabel || person.cpr || "—")}</td><td>${escapeHtml(person.arrival || "")}${person.note ? `<br>${escapeHtml(person.note)}` : ""}</td></tr>`; }).join("");
+  const leaveCount = assignments.filter((person) => hasStatusActivity(person, "VAC = ลา")).length;
+  const specialCount = assignments.reduce((count, person) => count + statusActivitiesOf(person).filter((entry) => entry.type !== "VAC = ลา").length, 0);
+  const rows = assignments.map((person) => { const isLeave = hasStatusActivity(person, "VAC = ลา"); return `<tr class="${assignmentPrintClass(person)}"><td>${isLeave ? "VACATION" : `<b>${escapeHtml(person.name)}</b><br><small>${escapeHtml(person.role)}</small>`}</td><td>${activityStatusHtml(person)}<br>พัก ${escapeHtml(person.break)} น.</td><td>${taskText(person, dateKey(new Date(plan.date)))}</td><td>${isLeave ? "—" : escapeHtml(person.location || "-")}</td><td>${escapeHtml(person.fireLabel || person.fire || "—")}<br>${escapeHtml(person.cprLabel || person.cpr || "—")}</td><td>${escapeHtml(person.arrival || "")}${person.note ? `<br>${escapeHtml(person.note)}` : ""}</td></tr>`; }).join("");
   const product = calculateProduct(plan);
   const a = plan.allocation;
-  const roleSummary = ["nurse", "pn", "hp"].map((role) => { const values = plan.roleActivity?.[role] || { training: 0, float: 0, collect: 0 }; return `<span><b>${roleLabel(role)}</b> ลา ${a[`leave${roleSuffix(role)}`] || 0} · อ/ป ${values.training} · Float ${values.float} · เก็บ ${values.collect} ชม.</span>`; }).join("");
+  const roleSummary = ["nurse", "pn", "hp"].map((role) => { const values = plan.roleActivity?.[role] || { training: 0, float: 0, collect: 0 }; return `<span><b>${roleLabel(role)}</b> ลา ${a[`leave${roleSuffix(role)}`] || 0} · อ/ป ${values.training} · Float ${values.float} · เก็บ ${values.collect} ชม.${values.collect ? ` (หัก ${COLLECT_DEDUCTION_HOURS} ชม.)` : ""}</span>`; }).join("");
   return `<section class="print-day"><div class="print-day-head"><div><h2>${plan.label} · ${toThaiDate(new Date(plan.date))}</h2><p>ตารางจ่ายงานบุคลากรประจำวัน · ข้อมูลจาก Workforce Management</p></div><div class="print-day-kpis"><span><b>${demand(plan)}</b>ผู้ป่วยคาดการณ์</span><span><b>${product === null ? "—" : `${product}%`}</b>Product</span><span><b>${leaveCount}</b>ลา</span><span><b>${specialCount}</b>กิจกรรม</span></div></div><div class="print-workforce-summary">${roleSummary}</div><table><thead><tr><th>ชื่อ / ตำแหน่ง</th><th>กิจกรรม / พัก</th><th>หน้าที่ / เวลา</th><th>ปภ.1/2</th><th>Code อัคคีภัย / CPR</th><th>เวลามา / เซ็นชื่อ / หมายเหตุ</th></tr></thead><tbody>${rows}</tbody></table>${printCodeLegendHtml()}</section>`;
 }
 function buildWeeklyPrintSchedule() {
