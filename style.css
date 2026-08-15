@@ -1624,3 +1624,14 @@ body { font-size: var(--opd-body-size); }
   .assignment-card .status-task-line { grid-template-columns:16px minmax(64px,.78fr) minmax(96px,1.22fr); }
   .assignment-card .status-task-time { white-space:normal; }
 }
+
+/* v21 distinct activity highlights: collect must not resemble normal working rows */
+.assignment-row.is-collect { background:linear-gradient(90deg,#e8f0ff 0%,#b8d0ff 100%) !important; box-shadow:inset 4px 0 #315fce,inset 0 1px rgba(255,255,255,.9); }
+.assignment-row.is-collect .assignment-person strong { color:#173f91 !important; }
+.assignment-row.is-collect .work-status { color:#173f91 !important; background:#d4e2ff !important; }
+.assignment-row.is-collect .activity-button.is-active { background:#315fce !important; border-color:#315fce !important; color:#fff !important; }
+.print-schedule tr.collect-row td, .download-pdf tr.collect-row td { background:#b8d0ff !important; color:#173f91 !important; }
+.print-schedule .activity-pill-collect, .download-pdf .activity-pill-collect { background:#315fce !important; color:#fff !important; border:1px solid #23489b !important; }
+.print-schedule tr:not(.leave-row):not(.training-row):not(.float-row):not(.collect-row) td, .download-pdf tr:not(.leave-row):not(.training-row):not(.float-row):not(.collect-row) td { background:#f7fbff; color:#24445c; }
+.print-schedule tr.float-row td, .download-pdf tr.float-row td { background:#ddd8ff !important; color:#382b82 !important; }
+.print-schedule .activity-pill-float, .download-pdf .activity-pill-float { background:#6b57d9 !important; color:#fff !important; border:1px solid #4634a9 !important; }
