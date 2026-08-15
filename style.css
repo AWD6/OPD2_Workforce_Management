@@ -1635,3 +1635,34 @@ body { font-size: var(--opd-body-size); }
 .print-schedule tr:not(.leave-row):not(.training-row):not(.float-row):not(.collect-row) td, .download-pdf tr:not(.leave-row):not(.training-row):not(.float-row):not(.collect-row) td { background:#f7fbff; color:#24445c; }
 .print-schedule tr.float-row td, .download-pdf tr.float-row td { background:#ddd8ff !important; color:#382b82 !important; }
 .print-schedule .activity-pill-float, .download-pdf .activity-pill-float { background:#6b57d9 !important; color:#fff !important; border:1px solid #4634a9 !important; }
+
+/* v23 equal-width task time fields */
+.assignment-card .task-line input[aria-label="เวลาหน้าที่"] {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+@media (min-width: 901px) {
+  .assignment-card .task-line { grid-template-columns: 20px minmax(0, 1fr) minmax(118px, 118px); }
+  .assignment-card .task-line.has-custom-task { grid-template-columns: 20px minmax(0, .8fr) minmax(0, 1.2fr) minmax(118px, 118px); }
+}
+@media (max-width: 900px) {
+  .assignment-card .task-line { grid-template-columns: 20px minmax(0, 1fr) minmax(118px, 118px); }
+  .assignment-card .task-line.has-custom-task { grid-template-columns: 20px minmax(0, .8fr) minmax(0, 1.2fr) minmax(118px, 118px); }
+}
+@media (max-width: 560px) {
+  .assignment-card .task-line,
+  .assignment-card .task-line.has-custom-task { grid-template-columns: 20px minmax(0, 1fr) minmax(118px, 118px); }
+  .assignment-card .task-line.has-custom-task { grid-template-columns: 20px minmax(0, 1fr) minmax(118px, 118px); }
+}
+
+/* v23 final override: time fields must fill the equal-width time column */
+.assignment-card .task-line input[aria-label="เวลาหน้าที่"] {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  flex: 0 0 auto;
+}

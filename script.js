@@ -38,7 +38,12 @@ function normalizeTimeText(value) {
   const text = String(value || "").trim();
   if (!text) return "";
   if (!/\d/.test(text)) return text;
-  const normalized = text.replace(/[–—]/g, " - ").replace(/\s+/g, " ").replace(/\s*-\s*/g, " - ").trim();
+  const normalized = text
+    .replace(/[–—]/g, " - ")
+    .replace(/(\d{1,2}):(\d{2})/g, "$1.$2")
+    .replace(/\s+/g, " ")
+    .replace(/\s*-\s*/g, " - ")
+    .trim();
   return /น\.\s*$/.test(normalized) ? normalized : `${normalized} น.`;
 }
 function workTimeForDate(dateText) { const day = new Date(`${dateText}T00:00:00`).getDay(); return WORKDAY_TIMES[day] || WORKDAY_TIMES[1]; }
@@ -607,7 +612,7 @@ function renderAssignments() {
     person.activities.forEach((activity, taskIndex) => {
       document.getElementById(`task-${index}-${taskIndex}`)?.addEventListener("change", (event) => { activity.task = event.target.value === "อื่นๆ" ? "อื่นๆ" : event.target.value; person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); refreshAssignmentView(); queueAssignmentTemplateSync(); });
       document.getElementById(`custom-task-${index}-${taskIndex}`)?.addEventListener("change", (event) => { activity.task = event.target.value; person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); refreshAssignmentView(); queueAssignmentTemplateSync(); });
-      document.getElementById(`time-${index}-${taskIndex}`)?.addEventListener("change", (event) => { activity.time = event.target.value; activity.timeLocked = true; person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); queueAssignmentTemplateSync(); });
+      document.getElementById(`time-${index}-${taskIndex}`)?.addEventListener("change", (event) => { activity.time = normalizeTimeText(event.target.value); event.target.value = activity.time; activity.timeLocked = true; person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); queueAssignmentTemplateSync(); });
     });
     document.querySelectorAll(`[data-code-toggle="${index}"]`).forEach((button) => button.addEventListener("click", () => { const field = button.dataset.codeType; const key = `${field}Codes`; const options = field === "fire" ? FIRE_CODE_OPTIONS : CPR_CODE_OPTIONS; const values = Array.isArray(person[key]) ? [...person[key]] : normalizeCodeValues(person[`${field}Label`] || person[field], options); const value = button.dataset.codeValue; const nextValues = values.includes(value) ? values.filter((item) => item !== value) : [...values, value]; person[key] = nextValues; if (field === "fire") person.fireLocked = true; if (field === "cpr") person.cprLocked = true; syncPersonCodeState(person, field, options); saveAssignments(); refreshAssignmentView(); queueAssignmentTemplateSync(); }));
     ["arrival", "note"].forEach((field) => document.getElementById(`${field}-${index}`)?.addEventListener("change", (event) => { person[field] = event.target.value; saveAssignments(); }));
