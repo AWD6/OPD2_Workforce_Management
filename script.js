@@ -119,7 +119,7 @@ function loadAssignments(dateText) {
     syncPersonCodeState(person, "fire", FIRE_CODE_OPTIONS);
     syncPersonCodeState(person, "cpr", CPR_CODE_OPTIONS);
     if (person.name === "มณีวรรณ" && !saved?.length) { person.cprCodes = ["A ตามแพทย์/ประสานงาน"]; syncPersonCodeState(person, "cpr", CPR_CODE_OPTIONS); }
-    if (hasStatusActivity(person, "เก็บชั่วโมง")) person.break = "13.00";
+    if (hasStatusActivity(person, "เก็บชั่วโมง")) person.break = "12.00";
     if (!person.timeLocked && isAutoWorkTime(person.time)) person.time = normalizeTimeText(defaultTime);
     else person.time = normalizeTimeText(person.time);
     person.activities = (person.activities || []).map((activity) => {
@@ -535,7 +535,7 @@ function toggleStatusActivity(person, type) {
     person.statusActivities = next;
   }
   normalizeStatusActivities(person);
-  if (hasStatusActivity(person, "เก็บชั่วโมง")) person.break = "13.00";
+  if (hasStatusActivity(person, "เก็บชั่วโมง")) person.break = "12.00";
 }
 function renderAssignments() {
   const dayButtons = document.getElementById("assignmentDayButtons");
@@ -552,7 +552,7 @@ function renderAssignments() {
   document.getElementById("assignmentRows").innerHTML = currentAssignments.map((person, index) => `<div class="assignment-row ${assignmentRowClass(person)}">
     <div class="assignment-person"><strong>${escapeHtml(person.name)}</strong><small>${escapeHtml(person.role)}</small></div>
     ${activityControlsHtml(person, index)}
-    <div>${assignmentSelect(`break-${index}`, hasStatusActivity(person, "เก็บชั่วโมง") ? ["13.00"] : BREAK_OPTIONS, "13.00" === person.break ? "13.00" : person.break)}</div>
+    <div>${assignmentSelect(`break-${index}`, hasStatusActivity(person, "เก็บชั่วโมง") ? ["12.00"] : BREAK_OPTIONS, "12.00" === person.break ? "12.00" : person.break)}</div>
     <div class="tasks-cell">${person.activities.map((activity, taskIndex) => { const hasCustomTask = !TASK_OPTIONS.includes(activity.task) || activity.task === "อื่นๆ"; const floatClass = taskIsFloat(activity.task) ? "float-task" : ""; return `<div class="task-line ${hasCustomTask ? "has-custom-task" : ""} ${floatClass}"><span class="task-number">${taskIndex + 1}.</span>${assignmentSelect(`task-${index}-${taskIndex}`, TASK_OPTIONS, TASK_OPTIONS.includes(activity.task) ? activity.task : "อื่นๆ")}${hasCustomTask ? `<input id="custom-task-${index}-${taskIndex}" value="${escapeHtml(TASK_OPTIONS.includes(activity.task) ? "" : activity.task)}" placeholder="กรอกหน้าที่อื่นๆ" />` : ""}<input id="time-${index}-${taskIndex}" value="${escapeHtml(activity.time)}" aria-label="เวลาหน้าที่" placeholder="เวลา" />${taskIndex > 0 ? `<button type="button" class="remove-task-button" data-remove-task="${index}" data-task-index="${taskIndex}" aria-label="ลบหน้าที่">ลบ</button>` : ""}</div>`; }).join("")}${statusTaskHtml(person, assignmentDate)}<button type="button" class="add-task-button" data-add-task="${index}">+ เพิ่มหน้าที่</button></div>
     <div class="location-buttons">${LOCATION_OPTIONS.map((location) => `<button type="button" class="location-button ${person.location === location ? "is-active" : ""}" data-location="${index}" data-value="${escapeHtml(location)}">${escapeHtml(location)}</button>`).join("")}</div>
     <div class="code-cell"><div class="code-group"><small>อัคคีภัย</small><div class="code-toggle-list">${codeToggleHtml(index, "fire", FIRE_CODE_OPTIONS, person.fireCodes || [])}</div></div><div class="code-group"><small>CPR</small><div class="code-toggle-list">${codeToggleHtml(index, "cpr", CPR_CODE_OPTIONS, person.cprCodes || [])}</div></div></div>
@@ -561,7 +561,7 @@ function renderAssignments() {
   currentAssignments.forEach((person, index) => {
     document.querySelectorAll(`[data-activity="${index}"]`).forEach((button) => button.addEventListener("click", () => { toggleStatusActivity(person, button.dataset.value); syncAssignmentsToWorkforce(); saveAssignments(); render(); }));
     ["training", "float"].forEach((slug) => document.getElementById(`activity-value-${index}-${slug}`)?.addEventListener("change", (event) => { const type = slug === "training" ? "ประชุม/อบรม" : "Float ออก"; const entry = statusActivityOf(person, type); if (entry) entry.value = event.target.value; normalizeStatusActivities(person); syncAssignmentsToWorkforce(); saveAssignments(); render(); }));
-    document.getElementById(`break-${index}`)?.addEventListener("change", (event) => { person.break = hasStatusActivity(person, "เก็บชั่วโมง") ? "13.00" : event.target.value; person.breakLocked = true; if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); syncAssignmentsToWorkforce(); saveAssignments(); render(); });
+    document.getElementById(`break-${index}`)?.addEventListener("change", (event) => { person.break = hasStatusActivity(person, "เก็บชั่วโมง") ? "12.00" : event.target.value; person.breakLocked = true; if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); syncAssignmentsToWorkforce(); saveAssignments(); render(); });
     document.querySelectorAll(`[data-location="${index}"]`).forEach((button) => button.addEventListener("click", () => { person.location = button.dataset.value; person.locationLocked = true; saveAssignments(); if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); renderAssignments(); }));
     document.querySelector(`[data-add-task="${index}"]`)?.addEventListener("click", () => { person.activities.push({ task: "อื่นๆ", time: "", timeLocked: true }); person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); renderAssignments(); });
     document.querySelectorAll(`[data-remove-task="${index}"]`).forEach((button) => button.addEventListener("click", () => { const taskIndex = Number(button.dataset.taskIndex); if (taskIndex <= 0 || taskIndex >= person.activities.length) return; person.activities.splice(taskIndex, 1); person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); renderAssignments(); }));
