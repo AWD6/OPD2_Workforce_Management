@@ -867,8 +867,15 @@ body.print-schedule #printSchedule { display:block; }
 .print-schedule td { padding:6px 5px; border-color:#b8cbd1; }
 .print-schedule tbody tr:nth-child(even) td { background:#f4f9fa; }
 .print-schedule tr.leave-row td { color:#8e2d24; background:#ffe0d8 !important; }
+.print-schedule tr.training-row td { background:#fffde7 !important; color:#6d4c00; }
+.print-schedule tr.collect-row td { background:#e3f2fd !important; color:#1565c0; }
+.print-schedule tr.float-row td { background:#e8eaf6 !important; color:#1a237e; }
 .print-schedule .status-pill { display:inline-block; padding:2px 6px; border-radius:99px; color:#087968; background:#d8f5ee; font-size:8px; font-weight:800; }
 .print-schedule .leave-row .status-pill { color:#a83f35; background:#ffd1c8; }
+.print-schedule .training-row .status-pill { color:#6d4c00; background:#fff1a8; }
+.print-schedule .collect-row .status-pill { color:#1565c0; background:#bbdefb; }
+.print-schedule .float-row .status-pill { color:#1a237e; background:#c5cae9; }
+.print-schedule .pdf-task-line { display:inline-block; white-space:nowrap; margin-right:6px; margin-bottom:2px; }
 .print-schedule .print-notes { display:grid; grid-template-columns:1.3fr 1fr; gap:10px; margin-top:10px; }
 .print-schedule .print-note,.print-schedule .print-footer { margin:0; padding:8px 10px; border-radius:10px; background:#f1f7f8; color:#526974; font-size:8px; line-height:1.5; }
 .print-schedule .print-footer { background:#e5f5f2; color:#126557; }
@@ -1366,6 +1373,11 @@ body { font-size: var(--opd-body-size); }
 .download-pdf th { font-size: 9.5px; padding: 8px 5px; }
 .download-pdf td { font-size: 10px; padding: 7px 5px; line-height: 1.35; }
 .download-pdf .status-pill { font-size: 9.5px; padding: 3px 6px; }
+.download-pdf tr.leave-row td { background:#ffe0d8 !important; color:#8e2d24; }
+.download-pdf tr.training-row td { background:#fffde7 !important; color:#6d4c00; }
+.download-pdf tr.collect-row td { background:#e3f2fd !important; color:#1565c0; }
+.download-pdf tr.float-row td { background:#e8eaf6 !important; color:#1a237e; }
+.download-pdf .pdf-task-line { display:inline-block; white-space:nowrap; margin-right:6px; margin-bottom:2px; font-size:9.5px; }
 .download-pdf .print-code-legend { font-size: 9.5px; line-height: 1.45; padding: 8px 10px; }
 .download-pdf .print-code-legend strong { font-size: 11px; }
 

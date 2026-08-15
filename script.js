@@ -6,7 +6,8 @@ const STORAGE = {
   weeks: "careplan-weeks-v2",
   records: "careplan-records-v2",
   schedules: "careplan-schedules-v1",
-  monthlyCodes: "careplan-monthly-codes-v1"
+  monthlyCodes: "careplan-monthly-codes-v1",
+  assignmentTemplate: "careplan-assignment-template-v1"
 };
 
 const DEFAULT_ASSIGNMENT_STAFF = [
@@ -35,6 +36,7 @@ function workTimeForDate(dateText) { const day = new Date(`${dateText}T00:00:00`
 function isAutoWorkTime(value) { const text = String(value || "").trim(); return !text || /^(07[:.]45|07[:.]50)\s*[–-]\s*(13[:.]00|16[:.]00)(?:\s*น\.)?$/.test(text) || /^(07[:.]50)\s*[–-]\s*09[:.]30$/.test(text); }
 function isMondayDate(dateText) { return new Date(`${dateText}T00:00:00`).getDay() === 1; }
 function assignmentRowClass(person) { return person.activity === "VAC = ลา" ? "is-leave" : person.activity === "ประชุม/อบรม" ? "is-training" : person.activity === "เก็บชั่วโมง" ? "is-collect" : person.activity === "Float ออก" ? "is-float" : ""; }
+function assignmentPrintClass(person) { return person.activity === "VAC = ลา" ? "leave-row" : person.activity === "ประชุม/อบรม" ? "training-row" : person.activity === "เก็บชั่วโมง" ? "collect-row" : person.activity === "Float ออก" ? "float-row" : ""; }
 function taskIsFloat(task) { return /float/i.test(String(task || "")); }
 const LOCATION_OPTIONS = ["-", "ปภ.1 คัดกรอง", "ปภ.1 พบแพทย์", "ปภ.1 ห้อง Cysto", "ปภ.2 คัดกรอง", "ปภ.2 พบแพทย์", "ปภ.2 ห้อง Cysto"];
 const FIRE_CODE_OPTIONS = ["C1 สื่อสาร/ประสานงาน", "C2 เคลื่อนย้าย", "C3 ดับเพลิง"];
@@ -72,12 +74,12 @@ function loadAssignments(dateText) {
   const saved = assignmentStaff[dateText];
   const defaults = cloneDefaultAssignments();
   const result = saved?.length ? saved.map((item, index) => ({ ...defaults[index], ...item, activities: (item.activities?.length ? item.activities : [{ task: item.task || defaults[index].task, time: item.time || defaults[index].time }]).map((activity) => ({ ...activity, task: normalizeTaskName(activity.task) })) })) : defaults;
-  if (saved?.length) result.forEach((person, index) => { if (!saved[index]?.locationLocked) person.location = "-"; });
+  if (saved?.length) result.forEach((person, index) => { if (!saved[index]?.location) person.location = "-"; });
   const defaultTime = workTimeForDate(dateText);
   result.forEach((person) => {
     syncPersonCodeState(person, "fire", FIRE_CODE_OPTIONS);
     syncPersonCodeState(person, "cpr", CPR_CODE_OPTIONS);
-    if (person.name === "มณีวรรณ") { person.cprCodes = ["A ตามแพทย์/ประสานงาน"]; syncPersonCodeState(person, "cpr", CPR_CODE_OPTIONS); }
+    if (person.name === "มณีวรรณ" && !saved?.length) { person.cprCodes = ["A ตามแพทย์/ประสานงาน"]; syncPersonCodeState(person, "cpr", CPR_CODE_OPTIONS); }
     if (!person.timeLocked && isAutoWorkTime(person.time)) person.time = defaultTime;
     person.activities = (person.activities || []).map((activity) => (!activity.timeLocked && isAutoWorkTime(activity.time)) ? { ...activity, time: defaultTime } : activity);
   });
@@ -106,20 +108,63 @@ function syncAssignmentsToWorkforce() {
 }
 function weekAssignmentDates() { return currentPlans.map((plan) => dateKey(new Date(plan.date))); }
 function saveAssignments() { assignmentStaff[assignmentDate] = currentAssignments; writeStorage(STORAGE.schedules, assignmentStaff); }
+function assignmentTemplateFrom(mondayAssignments) {
+  return mondayAssignments.map((person) => ({
+    ...person,
+    activity: "ปฏิบัติงาน",
+    status: "ปฏิบัติงาน",
+    activityValue: "",
+    arrival: "",
+    note: "",
+    scheduleNote: "",
+    breakLocked: false,
+    locationLocked: false,
+    fireLocked: false,
+    cprLocked: false,
+    taskOverride: false,
+    activities: (person.activities || []).map((activity) => ({ ...activity, timeLocked: false }))
+  }));
+}
 function syncMondayTaskDefaults() {
   if (!currentPlans?.length) return;
   const mondayKey = dateKey(new Date(currentPlans[0].date));
-  const mondayAssignments = loadAssignments(mondayKey);
+  const savedMonday = assignmentStaff[mondayKey];
+  let mondayAssignments = savedMonday?.length ? loadAssignments(mondayKey) : null;
+  const storedTemplate = readStorage(STORAGE.assignmentTemplate, null);
+  if (!mondayAssignments && storedTemplate?.length) {
+    const defaults = cloneDefaultAssignments();
+    mondayAssignments = storedTemplate.map((item, index) => ({ ...defaults[index], ...item }));
+    assignmentStaff[mondayKey] = mondayAssignments;
+  }
+  if (!mondayAssignments) mondayAssignments = loadAssignments(mondayKey);
+  if (assignmentDate === mondayKey && currentAssignments?.length) {
+    saveAssignments();
+    mondayAssignments = loadAssignments(mondayKey);
+  }
+  const template = assignmentTemplateFrom(mondayAssignments);
+  writeStorage(STORAGE.assignmentTemplate, template);
   currentPlans.slice(1).forEach((plan) => {
     const targetKey = dateKey(new Date(plan.date));
     const targetAssignments = loadAssignments(targetKey);
     let changed = false;
     mondayAssignments.forEach((source, index) => {
       const target = targetAssignments[index];
-      if (!target || target.taskOverride === true) return;
-      target.activities = (source.activities || []).map((activity) => ({ ...activity, time: workTimeForDate(targetKey), timeLocked: false }));
-      target.task = source.task;
-      changed = true;
+      if (!target) return;
+      if (target.breakLocked !== true && target.break !== source.break) { target.break = source.break; changed = true; }
+      if (target.locationLocked !== true && target.location !== source.location) { target.location = source.location || "-"; changed = true; }
+      if (target.fireLocked !== true) {
+        const sourceFire = [...(source.fireCodes || [])];
+        if (JSON.stringify(target.fireCodes || []) !== JSON.stringify(sourceFire)) { target.fireCodes = sourceFire; syncPersonCodeState(target, "fire", FIRE_CODE_OPTIONS); changed = true; }
+      }
+      if (target.cprLocked !== true) {
+        const sourceCpr = [...(source.cprCodes || [])];
+        if (JSON.stringify(target.cprCodes || []) !== JSON.stringify(sourceCpr)) { target.cprCodes = sourceCpr; syncPersonCodeState(target, "cpr", CPR_CODE_OPTIONS); changed = true; }
+      }
+      if (target.taskOverride !== true) {
+        target.activities = (source.activities || []).map((activity) => ({ ...activity, time: workTimeForDate(targetKey), timeLocked: false }));
+        target.task = source.task;
+        changed = true;
+      }
     });
     if (changed) assignmentStaff[targetKey] = targetAssignments;
   });
@@ -157,6 +202,9 @@ function escapeHtml(value) { return String(value ?? "").replace(/[&<>'"]/g, (cha
 let staff = readStorage(STORAGE.staff, DEFAULT_STAFF);
 let selectedWeek = getMonday(new Date());
 let currentPlans = loadWeek(selectedWeek);
+const initialAssignmentDates = currentPlans.map((plan) => dateKey(new Date(plan.date)));
+if (!initialAssignmentDates.includes(assignmentDate)) assignmentDate = initialAssignmentDates[0];
+currentAssignments = loadAssignments(assignmentDate);
 let lastCalculated = false;
 let toastTimer;
 
@@ -421,26 +469,26 @@ function renderAssignments() {
   </div>`).join("");
   currentAssignments.forEach((person, index) => {
     document.querySelectorAll(`[data-activity="${index}"]`).forEach((button) => button.addEventListener("click", () => { const nextActivity = button.dataset.value; const isTurningOff = person.activity === nextActivity; person.activity = isTurningOff ? "ปฏิบัติงาน" : nextActivity; person.activityValue = person.activity === "ประชุม/อบรม" ? "1" : person.activity === "Float ออก" ? FLOAT_PERIODS[0] : ""; person.status = person.activity; syncAssignmentsToWorkforce(); saveAssignments(); render(); }));
-    ["break", "activity-value"].forEach((field) => document.getElementById(`${field}-${index}`)?.addEventListener("change", (event) => { person[field === "activity-value" ? "activityValue" : field] = event.target.value; syncAssignmentsToWorkforce(); saveAssignments(); render(); }));
-    document.querySelectorAll(`[data-location="${index}"]`).forEach((button) => button.addEventListener("click", () => { person.location = button.dataset.value; person.locationLocked = true; saveAssignments(); renderAssignments(); }));
+    ["break", "activity-value"].forEach((field) => document.getElementById(`${field}-${index}`)?.addEventListener("change", (event) => { const targetField = field === "activity-value" ? "activityValue" : field; person[targetField] = event.target.value; if (field === "break") { person.breakLocked = true; if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); } syncAssignmentsToWorkforce(); saveAssignments(); render(); }));
+    document.querySelectorAll(`[data-location="${index}"]`).forEach((button) => button.addEventListener("click", () => { person.location = button.dataset.value; person.locationLocked = true; saveAssignments(); if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); renderAssignments(); }));
     document.querySelector(`[data-add-task="${index}"]`)?.addEventListener("click", () => { person.activities.push({ task: "อื่นๆ", time: "", timeLocked: true }); person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); renderAssignments(); });
     document.querySelectorAll(`[data-remove-task="${index}"]`).forEach((button) => button.addEventListener("click", () => { const taskIndex = Number(button.dataset.taskIndex); if (taskIndex <= 0 || taskIndex >= person.activities.length) return; person.activities.splice(taskIndex, 1); person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); renderAssignments(); }));
     person.activities.forEach((activity, taskIndex) => {
       document.getElementById(`task-${index}-${taskIndex}`)?.addEventListener("change", (event) => { activity.task = event.target.value === "อื่นๆ" ? "อื่นๆ" : event.target.value; person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); renderAssignments(); });
       document.getElementById(`custom-task-${index}-${taskIndex}`)?.addEventListener("change", (event) => { activity.task = event.target.value; person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); renderAssignments(); });
-      document.getElementById(`time-${index}-${taskIndex}`)?.addEventListener("change", (event) => { activity.time = event.target.value; activity.timeLocked = true; saveAssignments(); });
+      document.getElementById(`time-${index}-${taskIndex}`)?.addEventListener("change", (event) => { activity.time = event.target.value; activity.timeLocked = true; person.taskOverride = !isMondayDate(assignmentDate); saveAssignments(); if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); });
     });
-    document.querySelectorAll(`[data-code-toggle="${index}"]`).forEach((button) => button.addEventListener("click", () => { const field = button.dataset.codeType; const key = `${field}Codes`; const options = field === "fire" ? FIRE_CODE_OPTIONS : CPR_CODE_OPTIONS; const values = Array.isArray(person[key]) ? [...person[key]] : normalizeCodeValues(person[`${field}Label`] || person[field], options); const value = button.dataset.codeValue; const nextValues = values.includes(value) ? values.filter((item) => item !== value) : [...values, value]; person[key] = nextValues; syncPersonCodeState(person, field, options); saveAssignments(); renderAssignments(); }));
+    document.querySelectorAll(`[data-code-toggle="${index}"]`).forEach((button) => button.addEventListener("click", () => { const field = button.dataset.codeType; const key = `${field}Codes`; const options = field === "fire" ? FIRE_CODE_OPTIONS : CPR_CODE_OPTIONS; const values = Array.isArray(person[key]) ? [...person[key]] : normalizeCodeValues(person[`${field}Label`] || person[field], options); const value = button.dataset.codeValue; const nextValues = values.includes(value) ? values.filter((item) => item !== value) : [...values, value]; person[key] = nextValues; if (field === "fire") person.fireLocked = true; if (field === "cpr") person.cprLocked = true; syncPersonCodeState(person, field, options); saveAssignments(); if (isMondayDate(assignmentDate)) syncMondayTaskDefaults(); renderAssignments(); }));
     ["arrival", "note"].forEach((field) => document.getElementById(`${field}-${index}`)?.addEventListener("change", (event) => { person[field] = event.target.value; saveAssignments(); }));
   });
 }
-function formatActivity(person) { const label = person.activity || "ปฏิบัติงาน"; return label === "ประชุม/อบรม" ? `${label} ${person.activityValue || 1} ชม.` : label === "Float ออก" ? `${label} ${person.activityValue || "08.00 - 12.00 น."} · สุทธิ ${netFloatHours(person.activityValue)} ชม.` : label === "เก็บชั่วโมง" ? `${label} เลิกเที่ยง · สุทธิ 4 ชม.` : label; }
-function taskText(person) { return person.activities.map((activity, index) => `${index + 1}. ${activity.task}${activity.time ? ` (${activity.time})` : ""}`).join("<br>"); }
+function formatActivity(person) { const label = person.activity || "ปฏิบัติงาน"; return label === "ประชุม/อบรม" ? `${label} ${person.activityValue || 1} ชม.` : label === "Float ออก" ? `${label} ${person.activityValue || "08.00 - 12.00 น."} (${netFloatHours(person.activityValue)} ชม.)` : label === "เก็บชั่วโมง" ? `${label} เลิกเที่ยง (4 ชม.)` : label; }
+function taskText(person) { return person.activities.map((activity, index) => `<span class="pdf-task-line">${index + 1}.${escapeHtml(activity.task)}${activity.time ? ` ${escapeHtml(activity.time)}` : ""}</span>`).join(""); }
 function printCodeLegendHtml() { return `<div class="print-code-legend"><strong>คำอธิบาย Code และสถานที่</strong><span><b>Code อัคคีภัย</b> C1 สื่อสาร/ประสานงาน · C2 เคลื่อนย้าย · C3 ดับเพลิง</span><span><b>Code CPR</b> A ตามแพทย์/ประสานงาน · P1 ควบคุมสั่งการ · P2 AED/Defibrillator · P3 สารน้ำ/ยา/เจาะเลือด · P4 บันทึก CPR · P5 ทางเดินหายใจ · P6 chest compression</span><span><b>A ตามแพทย์/ประสานงาน:</b> OPD 110 โทร 34605 · OPD 10 โทร 35750–35760 · RR team โทร 38799 · ER โทร 36333 · เปล/เคลื่อนย้าย โทร 35692–35693</span></div>`; }
 function weeklyDayHtml(plan, assignments) {
   const leaveCount = assignments.filter((person) => person.activity === "VAC = ลา").length;
   const specialCount = assignments.filter((person) => person.activity !== "ปฏิบัติงาน" && person.activity !== "VAC = ลา").length;
-  const rows = assignments.map((person) => { const isLeave = person.activity === "VAC = ลา"; return `<tr class="${isLeave ? "leave-row" : ""}"><td>${isLeave ? "VACATION" : `<b>${escapeHtml(person.name)}</b><br><small>${escapeHtml(person.role)}</small>`}</td><td><span class="status-pill">${escapeHtml(formatActivity(person))}</span><br>พัก ${escapeHtml(person.break)} น.</td><td>${isLeave ? "ตัดออกจากกำลังคน" : taskText(person)}</td><td>${isLeave ? "—" : escapeHtml(person.location || "-")}</td><td>${escapeHtml(person.fireLabel || person.fire || "—")}<br>${escapeHtml(person.cprLabel || person.cpr || "—")}</td><td>${escapeHtml(person.arrival || "")}${person.note ? `<br>${escapeHtml(person.note)}` : ""}</td></tr>`; }).join("");
+  const rows = assignments.map((person) => { const isLeave = person.activity === "VAC = ลา"; return `<tr class="${assignmentPrintClass(person)}"><td>${isLeave ? "VACATION" : `<b>${escapeHtml(person.name)}</b><br><small>${escapeHtml(person.role)}</small>`}</td><td><span class="status-pill">${escapeHtml(formatActivity(person))}</span><br>พัก ${escapeHtml(person.break)} น.</td><td>${isLeave ? "ตัดออกจากกำลังคน" : taskText(person)}</td><td>${isLeave ? "—" : escapeHtml(person.location || "-")}</td><td>${escapeHtml(person.fireLabel || person.fire || "—")}<br>${escapeHtml(person.cprLabel || person.cpr || "—")}</td><td>${escapeHtml(person.arrival || "")}${person.note ? `<br>${escapeHtml(person.note)}` : ""}</td></tr>`; }).join("");
   const product = calculateProduct(plan);
   const a = plan.allocation;
   const roleSummary = ["nurse", "pn", "hp"].map((role) => { const values = plan.roleActivity?.[role] || { training: 0, float: 0, collect: 0 }; return `<span><b>${roleLabel(role)}</b> ลา ${a[`leave${roleSuffix(role)}`] || 0} · อ/ป ${values.training} · Float ${values.float} · เก็บ ${values.collect} ชม.</span>`; }).join("");
