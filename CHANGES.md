@@ -1,6 +1,13 @@
-# OPD 2 Workforce Management - Update Summary (v3.2)
+# OPD 2 Workforce Management - Update Summary (v3.3)
 
 ## Changes Applied
+
+### 0. ✅ Central Database Migration (v3.3)
+- Added a self-contained Node.js server with a shared SQLite database at `data/opd2.sqlite`.
+- Replaced the application persistence path with a central API while keeping the existing DOM, CSS, calculations, assignment workflow, records, reset actions, and PDF export unchanged.
+- Added one-time migration from legacy browser data when the central database is empty.
+- Added a GitHub Pages guard that requires `OPD2_API_BASE` so static hosting cannot be deployed without a central API endpoint.
+
 
 ### 1. ✅ Desktop-like Landscape Mode for Small Devices
 - **Sidebar Visibility**: Modified CSS to ensure the **Turquoise Sidebar** remains visible when a phone or small device is rotated to **Landscape orientation**, mimicking the desktop experience.

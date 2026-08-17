@@ -2,6 +2,8 @@
 
 ## 🚀 Quick Setup for GitHub Pages
 
+> GitHub Pages can host only the static frontend. Before deploying, publish `server.js` on an HTTPS-accessible hospital server and set the repository variable `OPD2_API_BASE` under **Settings → Secrets and variables → Actions → Variables** to that server URL. The workflow will stop instead of deploying a frontend that is not connected to the central database.
+
 ### Step 1: Create GitHub Repository
 
 1. Go to [GitHub.com](https://github.com)
@@ -77,7 +79,8 @@ After deployment, verify:
 - [ ] Turquoise sidebar and sky / off-white Light Luxury theme display correctly
 - [ ] Logo appears in sidebar
 - [ ] Buttons and inputs are interactive
-- [ ] Data saves to localStorage
+- [ ] `/api/health` responds with `ok: true` from the central server
+- [ ] Data written on one device is visible after opening the same server URL on a second device
 - [ ] Responsive design works on iPhone, iPad, notebook, and laptop widths
 - [ ] No console errors (F12 → Console)
 
@@ -98,9 +101,10 @@ After deployment, verify:
 
 ### Data Not Persisting
 
-1. Check browser localStorage (F12 → Application → Local Storage)
-2. Ensure cookies are enabled
-3. Try different browser or incognito mode
+1. Open `/api/health` on the same host and confirm that the server responds with `ok: true`.
+2. Confirm that every device opens the URL served by `server.js`, or that `opd2-config.js` points to the same central API URL.
+3. Check the server process log and confirm that `data/opd2.sqlite` is writable.
+4. If the network was interrupted, allow the browser to reconnect before expecting another device to see the newest change.
 
 ### Styling Issues
 
@@ -126,16 +130,18 @@ Test on mobile devices:
 ipconfig getifaddr en0  # macOS
 hostname -I            # Linux
 
-# Access from mobile on same network:
-# http://YOUR_LOCAL_IP:8000/OPD2_Workforce_Management
+# Start the central server from the project directory:
+# npm start
+# Access from mobile on the same network:
+# http://YOUR_LOCAL_IP:8787
 ```
 
 ## 🔐 Security Notes
 
-- All data stored locally (no server)
-- No external API calls
-- Safe for hospital networks
-- HTTPS enabled by default on GitHub Pages
+- The normal operating mode stores state in the central server's SQLite database.
+- No external API calls are required for the data layer.
+- Restrict the server port to the hospital network and use HTTPS through the hospital reverse proxy for production.
+- GitHub Pages hosts only static files; it does not run the central database server.
 
 ## 📞 Support
 
@@ -146,11 +152,11 @@ For GitHub-specific issues:
 
 ## 🎯 Next Steps
 
-1. ✅ Deploy to GitHub Pages
-2. ✅ Test on multiple devices
-3. ✅ Share with team
-4. ✅ Gather feedback
-5. ✅ Plan improvements
+1. ✅ Run `npm start` on the approved central server.
+2. ✅ Open the server URL from multiple devices on the hospital network.
+3. ✅ Test that a change made on one device is visible on a second device.
+4. ✅ Back up `data/opd2.sqlite` using the hospital's normal backup process.
+5. ✅ Share the central server URL with the approved team members.
 
 ---
 

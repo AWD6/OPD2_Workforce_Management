@@ -3,7 +3,7 @@
 > **Intelligent workforce planning system for OPD 2 (Surgical Specialty Clinic)**  
 > A modern, luxurious web application for managing daily staff readiness and patient demand forecasting
 
-![Version](https://img.shields.io/badge/version-3.2-blue.svg)
+![Version](https://img.shields.io/badge/version-3.3-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 
@@ -17,7 +17,7 @@ CarePlan is a sophisticated workforce management system designed specifically fo
 - **👥 Smart Staff Allocation**: Manage Nurse, PN, and HP staff assignments with leave and activity tracking
 - **📈 Demand Forecasting**: Plan for patient volume across appointment, walk-in, and external channels
 - **🎨 Luxury UI/UX**: Dark-theme interaction model preserved in a Turquoise / sky / off-white light theme with glassmorphism, dimensional shadows, hover elevation, and smooth micro-interactions
-- **💾 Local Data Storage**: All data stored securely on user's device (localStorage)
+- **💾 Central Data Storage**: All devices read and write the same server-side SQLite database
 - **📱 Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
 - **🔄 Weekly Records**: Archive and review historical workforce plans
 
@@ -98,11 +98,16 @@ Where:
 
 ## 📊 Data Management
 
-### Local Storage
-All data is stored in your browser's localStorage:
+### Central Database
+The browser communicates with the OPD2 server API. The server stores all application state in one SQLite database file (`data/opd2.sqlite`), so staff using different computers, tablets, or phones see the same plans and records. The data groups are kept under the same stable keys:
 - `careplan-staff-v2`: Staff configuration
 - `careplan-weeks-v2`: Weekly plans
 - `careplan-records-v2`: Historical records
+- `careplan-schedules-v1`: Daily assignment schedules
+- `careplan-monthly-codes-v1`: Monthly emergency codes
+- `careplan-assignment-templates-v2`: Assignment templates
+
+When the server first connects to a browser that has legacy local data, the application imports that data once into the empty central database. The UI and existing workflows remain unchanged.
 
 ### Reset Data
 - Click "คืนค่าเริ่มต้น" (Reset) button to clear all data
@@ -115,7 +120,7 @@ All data is stored in your browser's localStorage:
 ## 🛠 Technical Stack
 
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
-- **Storage**: Browser localStorage
+- **Storage**: Server-side SQLite via the built-in HTTP API; localStorage is used only as a temporary migration/outage fallback
 - **Fonts**: IBM Plex Sans Thai, Space Mono
 - **Icons**: SVG (embedded)
 - **Responsive**: CSS Grid & Flexbox
@@ -159,11 +164,11 @@ All data is stored in your browser's localStorage:
 
 ## 🔐 Privacy & Security
 
-- **No Server**: All data stays on your device
-- **No Tracking**: No analytics or telemetry
-- **No Sync**: Data not sent anywhere
-- **Local Only**: Works offline completely
-- **HTTPS Ready**: Safe for hospital networks
+- **Central Server**: The shared database is hosted by the OPD2 server selected by the deployment team
+- **No Tracking**: No analytics or telemetry is added by the data layer
+- **Controlled Access**: The API accepts only the application state keys it manages
+- **Local Fallback**: A temporary browser cache protects unsent edits during a network interruption; normal operation uses the central database
+- **HTTPS Ready**: Deploy behind HTTPS on the hospital network when used beyond a trusted local environment
 
 ## 📝 File Structure
 
@@ -171,7 +176,11 @@ All data is stored in your browser's localStorage:
 OPD2_Workforce_Management/
 ├── index.html              # Main application
 ├── style.css              # Styling (Turquoise Light Luxury theme)
-├── script.js              # Application logic
+├── script.js              # Existing application logic and UI event handling
+├── opd2-data-store.js     # Central API data layer and one-time legacy migration
+├── opd2-config.js         # Optional API URL/API key configuration
+├── server.js              # Self-contained HTTP server and SQLite API
+├── package.json           # Start/check scripts
 ├── opd2-logo-transparent.png  # Hospital logo
 ├── README.md              # This file
 └── .nojekyll             # GitHub Pages config
@@ -191,7 +200,12 @@ OPD2_Workforce_Management/
 
 ## 🔄 Version History
 
-### v3.2 (Current)
+### v3.3 (Current)
+- 🌐 Centralized SQLite database shared across devices through a self-contained server API
+- 🔁 One-time migration of legacy browser data into the central database
+- 🧩 Existing UI, calculations, assignment workflows, PDF export, reset, and records behavior preserved
+
+### v3.2
 - ✨ **Desktop-like Landscape Mode**: Small devices now retain the full Turquoise sidebar when rotated sideways, providing a desktop-like experience on phones and tablets
 - 🖼️ **Enhanced Logo Focus**: Improved logo prominence on the Turquoise sidebar with soft glow effects and multi-layer shadows
 - 🔓 Editable training, Float, and compensatory hour inputs
@@ -255,29 +269,40 @@ For issues, questions, or suggestions:
 
 ## 🚀 Deployment
 
-### Local Development
+### Central Server (recommended)
+Run one instance of the server on a machine that all approved devices can reach. Node.js 22.5 or newer is required because the server uses the built-in SQLite module.
+
 ```bash
-# No build step needed
-# Just open index.html in browser
-open index.html
+cd OPD2_Workforce_Management-main
+npm start
 ```
+
+The application will be available at `http://SERVER_IP:8787`. The database is created automatically at `data/opd2.sqlite`. Back up that file using the hospital's normal backup procedure. For production use, place the service behind HTTPS and restrict network access to the intended hospital users.
+
+Optional environment variables are available for deployment:
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `PORT` | HTTP port | `8787` |
+| `HOST` | Listen address | `0.0.0.0` |
+| `OPD2_DB_PATH` | SQLite database path | `data/opd2.sqlite` |
+| `OPD2_ALLOWED_ORIGIN` | Allowed browser origin | `*` |
+| `OPD2_API_KEY` | Optional API key protection | empty |
+
+### Separate static frontend
+If the frontend must remain on a static host, edit `opd2-config.js` and set `window.OPD2_API_BASE` to the HTTPS URL of the central OPD2 server. The static host alone cannot provide a shared database; the `server.js` process must remain online.
 
 ### GitHub Pages
-```bash
-# Push to main branch
-git push origin main
-
-# Your site will be live at:
-# https://yourusername.github.io/OPD2_Workforce_Management
-```
+The original GitHub Pages workflow is suitable only for a static frontend. It must be used together with a separately hosted `server.js` endpoint and an `opd2-config.js` API URL; otherwise each browser will use the temporary fallback cache rather than a shared database.
 
 ### Hospital Network
-- Copy all files to hospital web server
-- Access via internal URL
-- No external dependencies required
+- Run `server.js` once on an approved hospital server or always-on workstation.
+- Allow the chosen port only on the hospital network or through the hospital reverse proxy.
+- Open the server URL from every approved desktop, tablet, or mobile device.
+- Back up `data/opd2.sqlite` regularly; do not commit it to the repository.
 
 ---
 
 **Made with ❤️ for better healthcare workforce management**
 
-*Last Updated: August 12, 2026 · Version 3.2*
+*Last Updated: August 17, 2026 · Version 3.3*

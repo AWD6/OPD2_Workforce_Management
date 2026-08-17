@@ -316,6 +316,7 @@ let toastTimer;
 
 function readStorage(key, fallback) {
   try {
+    if (window.__OPD2_STORE__) return window.__OPD2_STORE__.read(key, fallback) ?? fallback;
     const value = JSON.parse(localStorage.getItem(key));
     return value ?? fallback;
   } catch {
@@ -324,7 +325,19 @@ function readStorage(key, fallback) {
 }
 
 function writeStorage(key, value) {
+  if (window.__OPD2_STORE__) {
+    window.__OPD2_STORE__.write(key, value);
+    return;
+  }
   localStorage.setItem(key, JSON.stringify(value));
+}
+
+function removeStorage(key) {
+  if (window.__OPD2_STORE__) {
+    window.__OPD2_STORE__.remove(key);
+    return;
+  }
+  localStorage.removeItem(key);
 }
 
 function dateKey(date) {
@@ -881,8 +894,8 @@ function resetWeek() {
 
 function resetAll() {
   staff = { ...DEFAULT_STAFF };
-  localStorage.removeItem(STORAGE.weeks);
-  localStorage.removeItem(STORAGE.records);
+  removeStorage(STORAGE.weeks);
+  removeStorage(STORAGE.records);
   currentPlans = makeDefaultPlans(selectedWeek);
   lastCalculated = false;
   writeStorage(STORAGE.staff, staff);
@@ -948,3 +961,21 @@ setupAssignmentEvents();
 syncMondayTaskDefaults();
 syncAllAssignmentsToWorkforce();
 render();
+
+// The first synchronous render keeps the existing interaction responsive. Once the
+// central database has replied, replace the initial snapshot and render the exact same
+// UI with the shared records from the server.
+Promise.resolve(window.__OPD2_DATA_READY__).then(() => {
+  if (!window.__OPD2_STORE__?.isCentral()) return;
+  assignmentStaff = readStorage(STORAGE.schedules, {});
+  monthlyCodes = readStorage(STORAGE.monthlyCodes, {});
+  staff = readStorage(STORAGE.staff, DEFAULT_STAFF);
+  currentPlans = loadWeek(selectedWeek);
+  const validDates = currentPlans.map((plan) => dateKey(new Date(plan.date)));
+  if (!validDates.includes(assignmentDate)) assignmentDate = validDates[0];
+  currentAssignments = loadAssignments(assignmentDate);
+  syncMondayTaskDefaults();
+  currentAssignments = loadAssignments(assignmentDate);
+  syncAllAssignmentsToWorkforce();
+  render();
+}).catch((error) => console.error("[OPD2] โหลดข้อมูลกลางไม่สำเร็จ", error));
