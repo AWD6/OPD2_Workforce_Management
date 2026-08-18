@@ -1,12 +1,14 @@
-# OPD 2 Workforce Management - Update Summary (v3.3)
+# OPD 2 Workforce Management - Update Summary (v3.5)
 
 ## Changes Applied
 
-### 0. ✅ Central Database Migration (v3.3)
-- Added a self-contained Node.js server with a shared SQLite database at `data/opd2.sqlite`.
-- Replaced the application persistence path with a central API while keeping the existing DOM, CSS, calculations, assignment workflow, records, reset actions, and PDF export unchanged.
-- Added one-time migration from legacy browser data when the central database is empty.
-- Added a GitHub Pages guard that requires `OPD2_API_BASE` so static hosting cannot be deployed without a central API endpoint.
+### 0. ✅ Google Sheets Central Database and Near-Realtime Migration (v3.5)
+- Added Google Sheets + Google Apps Script Web App support for a shared GitHub Pages link without requiring a hospital server or Supabase setup.
+- Added quiet polling every few seconds so open viewer pages reload shared schedule changes without navigation or toast notifications.
+- Added viewer-by-default mode and a private editor URL using `?edit=...`; no user login is required.
+- Restricted writes to the Apps Script editor code while leaving public viewers read-only.
+- Kept the existing DOM, CSS, calculations, assignment workflow, records, reset actions, and PDF export unchanged.
+- Retained the self-contained Node.js/SQLite server as an optional self-hosted deployment path.
 
 
 ### 1. ✅ Desktop-like Landscape Mode for Small Devices

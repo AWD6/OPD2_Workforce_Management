@@ -306,3 +306,45 @@ The original GitHub Pages workflow is suitable only for a static frontend. It mu
 **Made with ❤️ for better healthcare workforce management**
 
 *Last Updated: August 17, 2026 · Version 3.3*
+
+
+## 📄 Google Sheets Shared Database and Quiet Realtime Updates
+
+GitHub Pages remains the frontend. Google Sheets stores the shared state, and a Google Apps Script Web App provides the read/write URL. No hospital server, Supabase project, or user login is required.
+
+### Google Sheets setup
+
+1. Create one Google Sheet for OPD2.
+2. Open **Extensions → Apps Script** from that Sheet.
+3. Copy `google-apps-script/Code.gs` into the Apps Script editor.
+4. Replace `CHANGE_THIS_TO_YOUR_PRIVATE_EDITOR_CODE` with a private editor code. Do not share this code with ordinary viewers.
+5. Deploy the script as a Web App, execute as the spreadsheet owner, and allow access to anyone with the link.
+6. Copy the Web App URL ending in `/exec`.
+
+The first read request creates a hidden sheet named `OPD2_STATE`. The sheet stores one JSON row per existing application state key, so the original UI and its existing data model remain unchanged.
+
+### GitHub Pages configuration
+
+Create one repository **Variable** under **Settings → Secrets and variables → Actions → Variables**:
+
+| Variable | Value |
+|----------|-------|
+| `OPD2_SHEETS_API_URL` | The deployed Google Apps Script Web App URL ending in `/exec` |
+
+Run the GitHub Pages workflow again. The workflow refuses to deploy without this central URL, preventing silent device-local storage.
+
+### Viewer and editor links
+
+The ordinary GitHub Pages URL is the viewer link for all staff. The editor link is the same URL with the private code in the query string:
+
+```text
+https://YOUR_USERNAME.github.io/OPD2_Workforce_Management/?edit=YOUR_EDITOR_CODE
+```
+
+The application removes the code from the visible address bar and keeps it only in the current browser session. Share the editor link only with the scheduler and supervisor.
+
+### Near-realtime behavior
+
+The app polls the Google Apps Script read endpoint about every 3.5 seconds. When another device writes a change, open staff pages silently reload the shared state and redraw the existing UI without navigation or a toast. The daily assignment table, leave/training/Float/compensatory status, patient forecasts, staff counts, Product, readiness metrics, and weekly records use the same Google Sheet.
+
+This no-login mode means anyone with the viewer link can read the schedule, while only the private editor code permits writes. Do not place patient-identifying information in this app.

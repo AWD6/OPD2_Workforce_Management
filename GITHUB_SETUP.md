@@ -163,3 +163,21 @@ For GitHub-specific issues:
 **Ready to deploy? Start with Step 1 above!**
 
 *Last Updated: August 11, 2026 · Version 3.0*
+
+
+## 📄 Google Sheets Shared Database and Realtime Polling
+
+GitHub Pages does not run a server process or SQLite. For the shared OPD2 schedule, use one Google Sheet and a Google Apps Script Web App.
+
+1. Create one Google Sheet.
+2. Open **Extensions → Apps Script**.
+3. Copy `google-apps-script/Code.gs` into the editor.
+4. Replace `CHANGE_THIS_TO_YOUR_PRIVATE_EDITOR_CODE` with a private editor code.
+5. Deploy as a Web App, execute as the spreadsheet owner, and allow access to anyone with the link.
+6. Copy the deployed URL ending in `/exec`.
+7. Add the repository variable `OPD2_SHEETS_API_URL` with that URL.
+8. Run the GitHub Pages workflow again.
+
+The ordinary GitHub Pages URL is the viewer link. The editor uses the same URL with `?edit=YOUR_EDITOR_CODE`; the application removes the code from the visible address bar after reading it. Do not share the editor link with ordinary viewers.
+
+The frontend polls the Apps Script endpoint about every 3.5 seconds. When an editor saves the workforce plan, open staff pages silently receive the new state and redraw the existing UI without navigation or a toast.

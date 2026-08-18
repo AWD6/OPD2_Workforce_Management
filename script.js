@@ -499,6 +499,24 @@ function inputHtml(id, value) {
   return `<input class="number-input" id="${id}" type="number" min="0" value="${value}" aria-label="จำนวน" />`;
 }
 
+function applyEditorMode() {
+  const store = window.__OPD2_STORE__;
+  const canEdit = !store?.isCloud?.() || Boolean(store?.canEdit?.());
+  document.documentElement.dataset.opd2Mode = canEdit ? "editor" : "viewer";
+  const editableSelectors = [
+    "#staffNurse", "#staffPn", "#staffHp",
+    "#planningRows input", "#planningRows button",
+    "#assignmentRows select", "#assignmentRows input", "#assignmentRows button", "#recordsList button",
+    "#monthlyFireCode", "#monthlyCprCode", "#dailyForecast", "#scheduleNote",
+    "#applyDefaultAssignments", "#generatePdfButton", "#calculateButton", "#saveRecord",
+    "#resetWeek", "#resetAll"
+  ];
+  document.querySelectorAll(editableSelectors.join(",")).forEach((element) => {
+    element.disabled = !canEdit;
+    element.setAttribute("aria-disabled", String(!canEdit));
+  });
+}
+
 function render() {
   document.getElementById("weekLabel").textContent = isCurrentWeek(selectedWeek) ? "สัปดาห์ปัจจุบัน" : weekLabel(selectedWeek);
   document.getElementById("weekInput").value = toWeekValue(selectedWeek);
@@ -513,6 +531,7 @@ function render() {
   renderAssignments();
   renderMetrics();
   renderRecords();
+  applyEditorMode();
 }
 
 function renderPlanningRows() {
@@ -615,6 +634,7 @@ function refreshAssignmentView() {
   renderAssignments();
   renderStaffingRows();
   renderMetrics();
+  applyEditorMode();
 }
 function renderAssignments() {
   const dayButtons = document.getElementById("assignmentDayButtons");
@@ -652,6 +672,7 @@ function renderAssignments() {
     document.querySelectorAll(`[data-code-toggle="${index}"]`).forEach((button) => button.addEventListener("click", () => { const field = button.dataset.codeType; const key = `${field}Codes`; const options = field === "fire" ? FIRE_CODE_OPTIONS : CPR_CODE_OPTIONS; const values = Array.isArray(person[key]) ? [...person[key]] : normalizeCodeValues(person[`${field}Label`] || person[field], options); const value = button.dataset.codeValue; const nextValues = values.includes(value) ? values.filter((item) => item !== value) : [...values, value]; person[key] = nextValues; if (field === "fire") person.fireLocked = true; if (field === "cpr") person.cprLocked = true; syncPersonCodeState(person, field, options); saveAssignments(); refreshAssignmentView(); queueAssignmentTemplateSync(); }));
     ["arrival", "note"].forEach((field) => document.getElementById(`${field}-${index}`)?.addEventListener("change", (event) => { person[field] = event.target.value; saveAssignments(); }));
   });
+  applyEditorMode();
 }
 function formatActivity(person) {
   const entries = statusActivitiesOf(person);
@@ -961,6 +982,18 @@ setupAssignmentEvents();
 syncMondayTaskDefaults();
 syncAllAssignmentsToWorkforce();
 render();
+
+window.addEventListener("opd2:remote-update", () => {
+  if (!window.__OPD2_STORE__?.isCentral?.()) return;
+  assignmentStaff = readStorage(STORAGE.schedules, {});
+  monthlyCodes = readStorage(STORAGE.monthlyCodes, {});
+  staff = readStorage(STORAGE.staff, DEFAULT_STAFF);
+  currentPlans = loadWeek(selectedWeek);
+  const validDates = currentPlans.map((plan) => dateKey(new Date(plan.date)));
+  if (!validDates.includes(assignmentDate)) assignmentDate = validDates[0];
+  currentAssignments = loadAssignments(assignmentDate);
+  render();
+});
 
 // The first synchronous render keeps the existing interaction responsive. Once the
 // central database has replied, replace the initial snapshot and render the exact same

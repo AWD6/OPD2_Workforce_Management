@@ -1,5 +1,7 @@
-// Leave empty when the frontend and central database server use the same origin.
-// For a separately hosted frontend, set this to the public URL of the OPD2 server.
+// Google Apps Script Web App configuration for the shared Google Sheets backend.
+// Set this value in the GitHub Pages workflow; leave it empty for local development.
+window.OPD2_SHEETS_API_URL = window.OPD2_SHEETS_API_URL || "";
+
+// Legacy self-hosted API settings are retained for optional local/server deployments.
 window.OPD2_API_BASE = window.OPD2_API_BASE || "";
-// If OPD2_API_KEY is enabled on the server, set the same key here over HTTPS.
 window.OPD2_API_KEY = window.OPD2_API_KEY || "";
