@@ -18,6 +18,7 @@
   let editorEnabled = true;
   let remoteRevision = "";
   let writeQueue = Promise.resolve();
+  let pendingWrites = 0;
   let remoteRefreshTimer = 0;
   let pollTimer = 0;
 
@@ -89,7 +90,8 @@
 
   function submitWrite(action, key, value) {
     if (!API_URL) return Promise.reject(new Error("Google Sheets API URL is not configured"));
-    return new Promise((resolve) => {
+    pendingWrites += 1;
+    return new Promise((resolve, reject) => {
       const frameName = `opd2_write_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const iframe = document.createElement("iframe");
       iframe.name = frameName;
@@ -111,10 +113,34 @@
         input.value = fieldValue;
         form.appendChild(input);
       });
+      let finished = false;
+      const finish = (error) => {
+        if (finished) return;
+        finished = true;
+        pendingWrites = Math.max(0, pendingWrites - 1);
+        window.clearTimeout(timeout);
+        iframe.remove();
+        form.remove();
+        if (error) reject(error); else resolve({ ok: true });
+      };
+      const timeout = window.setTimeout(() => finish(new Error("Google Sheets write timeout")), 15000);
+      let loadCount = 0;
+      iframe.onload = () => {
+        loadCount += 1;
+        // The first load is the blank iframe; the second load is the Apps Script response.
+        if (loadCount >= 2) finish();
+      };
+      iframe.onerror = () => finish(new Error("Google Sheets write failed"));
       document.body.append(iframe, form);
       form.submit();
-      window.setTimeout(() => { iframe.remove(); form.remove(); resolve({ ok: true }); }, 1200);
     });
+  }
+
+  function queueRemoteWrite(action, key, value) {
+    writeQueue = writeQueue
+      .then(() => submitWrite(action, key, value))
+      .catch((error) => console.error("[OPD2] Google Sheets write failed", error));
+    return writeQueue;
   }
 
   function scheduleRemoteRefresh() {
@@ -134,7 +160,7 @@
   }
 
   async function pollRemote() {
-    if (!cloudMode || document.hidden) return;
+    if (!cloudMode || document.hidden || pendingWrites > 0) return;
     try {
       const response = await jsonpRead("read");
       serverAvailable = true;
@@ -166,7 +192,7 @@
           const legacy = readLegacySnapshot();
           if (Object.keys(legacy).length) {
             replaceCache(legacy);
-            writeQueue = writeQueue.then(() => submitWrite("bulk", "", legacy));
+            queueRemoteWrite("bulk", "", legacy);
           }
         }
         window.__OPD2_STORAGE_MODE__ = "google-sheets";
@@ -209,7 +235,7 @@
   function write(key, value) {
     cache[key] = value;
     if (cloudMode) {
-      writeQueue = writeQueue.then(() => submitWrite("write", key, value)).catch((error) => console.error(`[OPD2] บันทึก Google Sheets ไม่สำเร็จ: ${key}`, error));
+      queueRemoteWrite("write", key, value);
       return true;
     }
     if (serverAvailable && API_BASE) {
@@ -231,7 +257,7 @@
   function remove(key) {
     delete cache[key];
     if (cloudMode) {
-      writeQueue = writeQueue.then(() => submitWrite("delete", key, null)).catch((error) => console.error(`[OPD2] ลบข้อมูลจาก Google Sheets ไม่สำเร็จ: ${key}`, error));
+      queueRemoteWrite("delete", key, null);
       return true;
     }
     if (serverAvailable && API_BASE) {
