@@ -15,8 +15,7 @@
   const cache = {};
   let serverAvailable = false;
   let cloudMode = Boolean(API_URL);
-  let editorEnabled = false;
-  let editorCode = "";
+  let editorEnabled = true;
   let remoteRevision = "";
   let writeQueue = Promise.resolve();
   let remoteRefreshTimer = 0;
@@ -62,25 +61,12 @@
     });
   }
 
-  function editorCodeFromUrl() {
-    const currentUrl = new URL(window.location.href);
-    const queryCode = currentUrl.searchParams.get("edit") || "";
-    if (queryCode) {
-      try { window.sessionStorage.setItem("opd2-editor-code", queryCode); } catch { /* ignore */ }
-      currentUrl.searchParams.delete("edit");
-      window.history.replaceState({}, document.title, `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
-      return queryCode;
-    }
-    try { return window.sessionStorage.getItem("opd2-editor-code") || ""; } catch { return ""; }
-  }
-
-  function jsonpRead(action = "read", code = "") {
+  function jsonpRead(action = "read") {
     if (!API_URL) return Promise.reject(new Error("Google Sheets API URL is not configured"));
     return new Promise((resolve, reject) => {
       const callbackName = `__opd2_jsonp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const script = document.createElement("script");
       const params = new URLSearchParams({ action, callback: callbackName, _: String(Date.now()) });
-      if (code) params.set("editorCode", code);
       let finished = false;
       const timer = window.setTimeout(() => finish(new Error("Google Sheets read timeout")), 12000);
       const finish = (error, data) => {
@@ -116,8 +102,7 @@
       const fields = {
         action,
         key: key || "",
-        valueJson: value === undefined ? "" : JSON.stringify(value),
-        editorCode
+        valueJson: value === undefined ? "" : JSON.stringify(value)
       };
       Object.entries(fields).forEach(([name, fieldValue]) => {
         const input = document.createElement("input");
@@ -170,7 +155,6 @@
   }
 
   async function bootstrap() {
-    editorCode = editorCodeFromUrl();
     try {
       if (API_URL) {
         const response = await jsonpRead("read");
@@ -178,16 +162,7 @@
         serverAvailable = true;
         remoteRevision = response.revision || "";
         replaceCache(response.data || {});
-        if (editorCode) {
-          try {
-            const verification = await jsonpRead("verify", editorCode);
-            editorEnabled = verification.ok === true;
-          } catch (error) {
-            console.warn("[OPD2] รหัสแก้ไขไม่ถูกต้อง", error);
-            editorEnabled = false;
-          }
-        }
-        if (!Object.keys(cache).length && editorEnabled) {
+        if (!Object.keys(cache).length) {
           const legacy = readLegacySnapshot();
           if (Object.keys(legacy).length) {
             replaceCache(legacy);
@@ -203,7 +178,6 @@
         const response = await request("/api/state");
         replaceCache(response.data || {});
         serverAvailable = true;
-        editorEnabled = true;
         window.__OPD2_STORAGE_MODE__ = "central-api";
         return;
       }
@@ -215,7 +189,6 @@
       if (API_URL) {
         cloudMode = true;
         serverAvailable = false;
-        editorEnabled = false;
         window.__OPD2_STORAGE_MODE__ = "sheets-unavailable";
         startPolling();
         return;
@@ -234,7 +207,6 @@
   }
 
   function write(key, value) {
-    if (cloudMode && !editorEnabled) return false;
     cache[key] = value;
     if (cloudMode) {
       writeQueue = writeQueue.then(() => submitWrite("write", key, value)).catch((error) => console.error(`[OPD2] บันทึก Google Sheets ไม่สำเร็จ: ${key}`, error));
@@ -257,7 +229,6 @@
   }
 
   function remove(key) {
-    if (cloudMode && !editorEnabled) return false;
     delete cache[key];
     if (cloudMode) {
       writeQueue = writeQueue.then(() => submitWrite("delete", key, null)).catch((error) => console.error(`[OPD2] ลบข้อมูลจาก Google Sheets ไม่สำเร็จ: ${key}`, error));
