@@ -309,9 +309,7 @@ let staff = readStorage(STORAGE.staff, DEFAULT_STAFF);
 let selectedWeek = getMonday(new Date());
 let currentPlans = loadWeek(selectedWeek);
 const initialAssignmentDates = currentPlans.map((plan) => dateKey(new Date(plan.date)));
-const initialCalendarDate = calendarDateForWeek(selectedWeek);
-if (initialAssignmentDates.includes(initialCalendarDate)) assignmentDate = initialCalendarDate;
-else if (!initialAssignmentDates.includes(assignmentDate)) assignmentDate = initialAssignmentDates[0];
+if (!initialAssignmentDates.includes(assignmentDate)) assignmentDate = initialAssignmentDates[0];
 currentAssignments = loadAssignments(assignmentDate);
 let lastCalculated = false;
 let toastTimer;
@@ -358,16 +356,6 @@ function addDays(date, amount) {
   const copy = new Date(date);
   copy.setDate(copy.getDate() + amount);
   return copy;
-}
-
-function calendarDateForWeek(monday, today = new Date()) {
-  const weekStart = getMonday(monday);
-  const currentWeekStart = getMonday(today);
-  if (dateKey(weekStart) === dateKey(currentWeekStart)) {
-    const day = today.getDay();
-    if (day >= 1 && day <= 5) return dateKey(today);
-  }
-  return dateKey(weekStart);
 }
 
 function toThaiDate(date, includeYear = true) {
@@ -709,7 +697,7 @@ function printCodeLegendHtml() { return `<div class="print-code-legend"><strong>
 function weeklyDayHtml(plan, assignments) {
   const leaveCount = assignments.filter((person) => hasStatusActivity(person, "VAC = ลา")).length;
   const specialCount = assignments.reduce((count, person) => count + statusActivitiesOf(person).filter((entry) => entry.type !== "VAC = ลา").length, 0);
-  const rows = assignments.map((person) => { const isLeave = hasStatusActivity(person, "VAC = ลา"); return `<tr class="${assignmentPrintClass(person)}"><td>${isLeave ? "VACATION" : `<b>${escapeHtml(person.name)}</b><br><small>${escapeHtml(person.role)}</small>`}</td><td>${activityStatusHtml(person)}<br>พัก ${escapeHtml(person.break)} น.</td><td>${taskText(person, dateKey(new Date(plan.date)))}</td><td>${isLeave ? "—" : escapeHtml(person.location || "-")}</td><td>${escapeHtml(person.fireLabel || person.fire || "—")}<br>${escapeHtml(person.cprLabel || person.cpr || "—")}</td><td>${escapeHtml(person.arrival || "")}${person.note ? `<br>${escapeHtml(person.note)}` : ""}</td></tr>`; }).join("");
+  const rows = assignments.map((person) => { const isLeave = hasStatusActivity(person, "VAC = ลา"); return `<tr class="${assignmentPrintClass(person)}"><td>${isLeave ? `<b>${escapeHtml(person.name)}</b><br><small>${escapeHtml(person.role)}</small><br><small>VACATION</small>` : `<b>${escapeHtml(person.name)}</b><br><small>${escapeHtml(person.role)}</small>`}</td><td>${activityStatusHtml(person)}<br>พัก ${escapeHtml(person.break)} น.</td><td>${taskText(person, dateKey(new Date(plan.date)))}</td><td>${isLeave ? "—" : escapeHtml(person.location || "-")}</td><td>${escapeHtml(person.fireLabel || person.fire || "—")}<br>${escapeHtml(person.cprLabel || person.cpr || "—")}</td><td>${escapeHtml(person.arrival || "")}${person.note ? `<br>${escapeHtml(person.note)}` : ""}</td></tr>`; }).join("");
   const product = calculateProduct(plan);
   const a = plan.allocation;
   const roleSummary = ["nurse", "pn", "hp"].map((role) => { const values = plan.roleActivity?.[role] || { training: 0, float: 0, collect: 0 }; return `<span><b>${roleLabel(role)}</b> ลา ${a[`leave${roleSuffix(role)}`] || 0} · อ/ป ${values.training} · Float ${values.float} · เก็บ ${values.collect} ชม.</span>`; }).join("");
@@ -892,8 +880,7 @@ function setWeek(monday) {
   selectedWeek = getMonday(monday);
   currentPlans = loadWeek(selectedWeek);
   const validDates = currentPlans.map((plan) => dateKey(new Date(plan.date)));
-  const calendarDate = calendarDateForWeek(selectedWeek);
-  assignmentDate = validDates.includes(calendarDate) ? calendarDate : validDates[0];
+  if (!validDates.includes(assignmentDate)) assignmentDate = validDates[0];
   currentAssignments = loadAssignments(assignmentDate);
   syncMondayTaskDefaults();
   currentAssignments = loadAssignments(assignmentDate);
